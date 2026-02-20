@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KeralaCollegeEvents.in</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #080a0f; font-family: 'DM Sans', sans-serif; color: #fff; min-height: 100vh; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #080a0f; }
+    ::-webkit-scrollbar-thumb { background: #1e2130; border-radius: 3px; }
+    input, select, textarea { font-family: 'DM Sans', sans-serif; }
+    input::placeholder, textarea::placeholder { color: #3a4460; }
+    select option { background: #1a1f2e; }
+    a { text-decoration: none; }
+
+    /* HEADER */
+    header {
+      background: #0a0c14;
+      border-bottom: 1px solid #1a1f2e;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .header-inner {
+      max-width: 1200px; margin: 0 auto; padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between; height: 64px;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, #00d4aa, #6c63ff);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px;
+    }
+    .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; letter-spacing: -0.5px; }
+    .logo-text span { color: #00d4aa; }
+    nav { display: flex; gap: 8px; }
+    .nav-btn {
+      background: transparent; border: 1px solid #1e2130; border-radius: 8px;
+      padding: 8px 16px; font-size: 13px; font-weight: 600; color: #7c8db5;
+      cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+    }
+    .nav-btn.active { background: #00d4aa; color: #000; border-color: #00d4aa; }
+
+    /* MAIN */
+    main { max-width: 1200px; margin: 0 auto; padding: 40px 24px; }
+
+    /* HERO */
+    .hero { text-align: center; margin-bottom: 48px; }
+    .hero-badge {
+      display: inline-block; background: #1a1f2e; border: 1px solid #2a3050;
+      border-radius: 20px; padding: 6px 16px; color: #00d4aa;
+      font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 20px;
+    }
+    .hero h1 { font-family: 'Syne', sans-serif; font-size: clamp(36px,6vw,64px); font-weight: 800; margin-bottom: 16px; line-height: 1.1; letter-spacing: -2px; }
+    .hero h1 .gradient { background: linear-gradient(90deg, #00d4aa, #6c63ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero p { color: #7c8db5; font-size: 18px; max-width: 500px; margin: 0 auto; }
+
+    /* FILTER BAR */
+    .filter-bar {
+      background: #0f1117; border: 1px solid #1e2130; border-radius: 16px;
+      padding: 20px; margin-bottom: 32px;
+      display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+    }
+    .filter-bar input, .filter-bar select {
+      background: #1a1f2e; border: 1px solid #2a3050; border-radius: 10px;
+      padding: 12px 16px; color: #fff; font-size: 14px; outline: none; cursor: pointer;
+    }
+    .filter-bar input { flex: 1 1 280px; }
+
+    /* PILLS */
+    .pills { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+    .pill {
+      background: #1a1f2e; color: #7c8db5; border: none;
+      border-radius: 20px; padding: 8px 16px; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all 0.15s; font-family: 'DM Sans', sans-serif;
+    }
+
+    /* RESULTS COUNT */
+    .results-count { color: #4a5568; font-size: 13px; margin-bottom: 20px; }
+
+    /* EVENT GRID */
+    #events-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;
+    }
+
+    /* EVENT CARD */
+    .event-card {
+      background: #0f1117; border: 1px solid #1e2130; border-radius: 16px;
+      overflow: hidden; cursor: pointer; transition: transform 0.2s, border-color 0.2s;
+    }
+    .event-card:hover { transform: translateY(-4px); }
+    .card-img { position: relative; height: 180px; overflow: hidden; }
+    .card-img img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.7); display: block; }
+    .card-cat {
+      position: absolute; top: 12px; left: 12px;
+      font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; letter-spacing: 0.5px; color: #000;
+    }
+    .card-deadline {
+      position: absolute; top: 12px; right: 12px;
+      background: #ff3d3d; color: #fff; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px;
+    }
+    .card-body { padding: 18px; }
+    .card-title { color: #fff; font-size: 17px; font-weight: 700; margin-bottom: 6px; font-family: 'Syne', sans-serif; }
+    .card-meta { color: #7c8db5; font-size: 13px; margin-bottom: 4px; }
+    .card-tags { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0 14px; }
+    .card-tag { background: #1a1f2e; color: #7c8db5; font-size: 11px; padding: 3px 8px; border-radius: 6px; }
+    .card-footer { display: flex; justify-content: space-between; align-items: center; }
+    .card-prize { font-weight: 700; font-size: 14px; }
+    .card-reg { color: #4a5568; font-size: 12px; }
+
+    /* EMPTY STATE */
+    .empty { text-align: center; padding: 80px 20px; color: #4a5568; }
+    .empty .emoji { font-size: 48px; margin-bottom: 16px; }
+    .empty p { font-size: 18px; }
+
+    /* MODAL OVERLAY */
+    .overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+      z-index: 200; align-items: center; justify-content: center; padding: 20px;
+    }
+    .overlay.open { display: flex; }
+    .modal {
+      background: #0f1117; border: 1px solid #1e2130; border-radius: 20px;
+      max-width: 620px; width: 100%; overflow: hidden; max-height: 90vh; overflow-y: auto;
+    }
+    .modal-img { width: 100%; height: 220px; object-fit: cover; filter: brightness(0.75); display: block; }
+    .modal-body { padding: 28px; }
+    .modal-cat { font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 20px; color: #000; display: inline-block; margin-bottom: 14px; }
+    .modal-title { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; margin-bottom: 8px; }
+    .modal-meta { color: #7c8db5; margin-bottom: 4px; }
+    .modal-desc { color: #c0ccdb; line-height: 1.7; margin: 16px 0 24px; }
+    .modal-stats {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px;
+    }
+    .stat-box { background: #1a1f2e; border-radius: 12px; padding: 14px; }
+    .stat-label { color: #4a5568; font-size: 12px; margin-bottom: 4px; }
+    .stat-val { color: #fff; font-weight: 600; font-size: 14px; }
+    .modal-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+    .modal-tag { font-size: 12px; padding: 5px 12px; border-radius: 8px; }
+    .register-btn {
+      width: 100%; border: none; border-radius: 12px; padding: 14px;
+      font-size: 16px; font-weight: 800; cursor: pointer; font-family: 'Syne', sans-serif;
+      letter-spacing: 0.5px; transition: opacity 0.2s;
+    }
+    .register-btn:hover { opacity: 0.85; }
+
+    /* POST FORM */
+    #post-tab { display: none; max-width: 900px; }
+    #post-tab.active { display: block; }
+    #browse-tab { display: block; }
+    #browse-tab.hidden { display: none; }
+
+    .for-colleges { text-align: center; margin-bottom: 60px; }
+    .for-colleges h1 { font-family: 'Syne', sans-serif; font-size: clamp(28px,5vw,52px); font-weight: 800; margin-bottom: 16px; letter-spacing: -1.5px; }
+    .for-colleges h1 span { color: #00d4aa; }
+    .for-colleges p { color: #7c8db5; font-size: 17px; max-width: 480px; margin: 0 auto 32px; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; margin-bottom: 60px; }
+    .stat-card { background: #0f1117; border: 1px solid #1e2130; border-radius: 16px; padding: 28px; text-align: center; }
+    .stat-card .num { color: #00d4aa; font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; }
+    .stat-card .lbl { color: #7c8db5; font-size: 14px; margin-top: 4px; }
+
+    .how-title { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; margin-bottom: 24px; }
+    .steps { display: grid; gap: 16px; margin-bottom: 48px; }
+    .step { background: #0f1117; border: 1px solid #1e2130; border-radius: 16px; padding: 24px; display: flex; gap: 20px; align-items: flex-start; }
+    .step-num { color: #00d4aa; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 28px; min-width: 48px; }
+    .step h3 { font-family: 'Syne', sans-serif; margin-bottom: 6px; }
+    .step p { color: #7c8db5; font-size: 14px; }
+
+    /* POST FORM MODAL */
+    .post-form-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
+    .post-form-overlay.open { display: flex; }
+    .post-form { background: #0f1117; border: 1px solid #1e2130; border-radius: 20px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 32px; }
+    .form-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
+    .form-header h2 { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; }
+    .close-btn { background: #1a1f2e; border: none; color: #7c8db5; font-size: 22px; cursor: pointer; border-radius: 8px; width: 36px; height: 36px; }
+    .form-grid { display: grid; gap: 18px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-label { color: #7c8db5; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+    .form-input {
+      background: #1a1f2e; border: 1px solid #2a3050; border-radius: 10px;
+      padding: 12px 14px; color: #fff; font-size: 14px; outline: none; width: 100%;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus { border-color: #00d4aa; }
+    textarea.form-input { resize: vertical; }
+    .post-btn {
+      width: 100%; background: #00d4aa; color: #000; border: none; border-radius: 12px;
+      padding: 14px; font-size: 16px; font-weight: 800; cursor: pointer;
+      font-family: 'Syne', sans-serif; letter-spacing: 0.5px; margin-top: 4px;
+    }
+    .hero-post-btn {
+      background: #00d4aa; color: #000; border: none; border-radius: 12px;
+      padding: 16px 32px; font-size: 16px; font-weight: 800; cursor: pointer;
+      font-family: 'Syne', sans-serif; letter-spacing: 0.5px;
+    }
+
+    /* REGISTRATION MODAL */
+    .reg-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 300; align-items: center; justify-content: center; padding: 20px; }
+    .reg-overlay.open { display: flex; }
+    .reg-form { background: #0f1117; border: 1px solid #1e2130; border-radius: 20px; max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 32px; }
+    .reg-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+    .reg-header h2 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; }
+    .reg-event-name { color: #7c8db5; font-size: 13px; margin-bottom: 24px; }
+    .success-box { display: none; text-align: center; padding: 20px 0; }
+    .success-box .tick { font-size: 56px; margin-bottom: 12px; }
+    .success-box h3 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+    .success-box p { color: #7c8db5; font-size: 14px; line-height: 1.6; }
+
+
+    /* ADMIN LOGIN */
+    .admin-login-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 500; align-items: center; justify-content: center; padding: 20px; }
+    .admin-login-overlay.open { display: flex; }
+    .admin-login-box {
+      background: #0f1117; border: 1px solid #1e2130; border-radius: 24px;
+      max-width: 420px; width: 100%; padding: 40px;
+      box-shadow: 0 0 60px rgba(0,212,170,0.08);
+    }
+    .admin-logo { text-align: center; margin-bottom: 28px; }
+    .admin-logo .shield { font-size: 44px; margin-bottom: 10px; }
+    .admin-logo h2 { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; margin-bottom: 4px; }
+    .admin-logo p { color: #7c8db5; font-size: 13px; }
+    .admin-error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 10px 14px; color: #f87171; font-size: 13px; margin-bottom: 16px; display: none; }
+
+    /* ADMIN DASHBOARD */
+    #admin-dashboard { display: none; max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+    .admin-topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; flex-wrap: wrap; gap: 12px; }
+    .admin-topbar h1 { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; }
+    .admin-topbar span { color: #7c8db5; font-size: 14px; }
+    .logout-btn { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #f87171; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+    .admin-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .admin-stat { background: #0f1117; border: 1px solid #1e2130; border-radius: 14px; padding: 20px; }
+    .admin-stat .a-num { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; }
+    .admin-stat .a-lbl { color: #7c8db5; font-size: 13px; margin-top: 4px; }
+    .admin-table-wrap { background: #0f1117; border: 1px solid #1e2130; border-radius: 16px; overflow: hidden; margin-bottom: 32px; }
+    .admin-table-header { padding: 18px 24px; border-bottom: 1px solid #1e2130; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .admin-table-header h3 { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; }
+    .admin-search { background: #1a1f2e; border: 1px solid #2a3050; border-radius: 8px; padding: 8px 14px; color: #fff; font-size: 13px; outline: none; font-family: 'DM Sans', sans-serif; width: 220px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { background: #1a1f2e; color: #7c8db5; font-weight: 600; padding: 12px 16px; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+    td { padding: 14px 16px; border-bottom: 1px solid #1a1f2e; color: #c0ccdb; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #111520; }
+    .admin-cat-badge { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 12px; color: #000; display: inline-block; }
+    .admin-delete-btn { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #f87171; border-radius: 6px; padding: 5px 10px; font-size: 11px; cursor: pointer; font-family: 'DM Sans',sans-serif; font-weight: 600; }
+    .admin-delete-btn:hover { background: rgba(239,68,68,0.25); }
+    .add-event-btn { background: #00d4aa; color: #000; border: none; border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: 'DM Sans',sans-serif; }
+    .empty-table { text-align: center; padding: 40px; color: #4a5568; }
+
+    /* EDIT EVENT MODAL */
+    .edit-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:600; align-items:center; justify-content:center; padding:20px; }
+    .edit-overlay.open { display:flex; }
+    .edit-form { background:#0f1117; border:1px solid #1e2130; border-radius:20px; max-width:600px; width:100%; max-height:90vh; overflow-y:auto; padding:32px; }
+
+    /* REGISTRATIONS MODAL */
+    .regs-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:600; align-items:center; justify-content:center; padding:20px; }
+    .regs-overlay.open { display:flex; }
+    .regs-box { background:#0f1117; border:1px solid #1e2130; border-radius:20px; max-width:700px; width:100%; max-height:90vh; overflow-y:auto; padding:32px; }
+    .regs-box h2 { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; margin-bottom:4px; }
+    .regs-subtitle { color:#7c8db5; font-size:13px; margin-bottom:20px; }
+    .reg-entry { background:#1a1f2e; border-radius:12px; padding:14px 18px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
+    .reg-entry .rname { color:#fff; font-weight:600; font-size:14px; }
+    .reg-entry .rdetail { color:#7c8db5; font-size:12px; }
+    .no-regs { text-align:center; color:#4a5568; padding:40px; font-size:15px; }
+
+    /* TOGGLE & ACTION BTNS */
+    .admin-action-btns { display:flex; gap:6px; flex-wrap:wrap; }
+    .admin-edit-btn { background:rgba(99,102,241,0.12); border:1px solid rgba(99,102,241,0.3); color:#818cf8; border-radius:6px; padding:5px 10px; font-size:11px; cursor:pointer; font-family:'DM Sans',sans-serif; font-weight:600; }
+    .admin-edit-btn:hover { background:rgba(99,102,241,0.25); }
+    .admin-view-btn { background:rgba(6,182,212,0.1); border:1px solid rgba(6,182,212,0.25); color:#22d3ee; border-radius:6px; padding:5px 10px; font-size:11px; cursor:pointer; font-family:'DM Sans',sans-serif; font-weight:600; }
+    .admin-view-btn:hover { background:rgba(6,182,212,0.2); }
+    .admin-toggle-btn { border-radius:6px; padding:5px 10px; font-size:11px; cursor:pointer; font-family:'DM Sans',sans-serif; font-weight:600; border:1px solid; }
+    .admin-toggle-btn.visible { background:rgba(132,204,22,0.1); border-color:rgba(132,204,22,0.3); color:#a3e635; }
+    .admin-toggle-btn.hidden-evt { background:rgba(156,163,175,0.1); border-color:rgba(156,163,175,0.2); color:#6b7280; }
+    .admin-topbar-btns { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .csv-btn { background:rgba(234,179,8,0.1); border:1px solid rgba(234,179,8,0.3); color:#fbbf24; border-radius:8px; padding:9px 18px; font-size:13px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; }
+    .csv-btn:hover { background:rgba(234,179,8,0.2); }
+    .hidden-row td { opacity:0.4; }
+    @media (max-width: 600px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .form-row { grid-template-columns: 1fr; }
+      .modal-stats { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">⚡</div>
+      <span class="logo-text">KeralaCollegeEvents<span>.</span>in</span>
+    </div>
+    <nav>
+      <button class="nav-btn active" id="btn-browse" onclick="switchTab('browse')">Browse Events</button>
+      <button class="nav-btn" id="btn-post" onclick="switchTab('post')">For Colleges</button>
+      <button class="nav-btn" id="btn-admin" onclick="openAdminLogin()" style="border-color:#00d4aa22;color:#00d4aa;">🔐 Admin</button>
+    </nav>
+  </div>
+</header>
+
+<!-- BROWSE TAB -->
+<main id="browse-tab">
+  <div class="hero">
+    <div class="hero-badge">Kerala's #1 College Event Platform</div>
+    <h1>Discover Events.<br /><span class="gradient">Build. Compete. Win.</span></h1>
+    <p>Hackathons, tech fests, and competitions from colleges across Kerala — all in one place.</p>
+  </div>
+
+  <div class="filter-bar">
+    <input type="text" id="search-input" placeholder="🔍  Search events, colleges, or tags..." oninput="renderEvents()" />
+    <select id="cat-filter" onchange="renderEvents()">
+      <option>All</option>
+      <option>Hackathon</option>
+      <option>Tech Fest</option>
+      <option>Coding</option>
+      <option>Design</option>
+      <option>Entrepreneurship</option>
+      <option>Arts Fest</option>
+      <option>Robotics Battle</option>
+      <option>Cultural Fest</option>
+      <option>Game Dev</option>
+      <option>Sports Fest</option>
+      <option>Dept Fest</option>
+    </select>
+    <select id="city-filter" onchange="renderEvents()">
+      <option>All Cities</option>
+      <option>Thiruvananthapuram</option>
+      <option>Kollam</option>
+      <option>Pathanamthitta</option>
+      <option>Alappuzha</option>
+      <option>Kottayam</option>
+      <option>Idukki</option>
+      <option>Ernakulam</option>
+      <option>Thrissur</option>
+      <option>Palakkad</option>
+      <option>Malappuram</option>
+      <option>Kozhikode</option>
+      <option>Wayanad</option>
+      <option>Kannur</option>
+      <option>Kasaragod</option>
+    </select>
+  </div>
+
+  <div class="pills" id="pills"></div>
+  <p class="results-count" id="results-count"></p>
+  <div id="events-grid"></div>
+</main>
+
+<!-- FOR COLLEGES TAB -->
+<main id="post-tab" style="max-width:900px">
+  <div class="for-colleges">
+    <h1>Reach thousands of<br /><span>Kerala's tech students</span></h1>
+    <p>Post your college events and get them in front of the most ambitious students across Kerala.</p>
+    <button class="hero-post-btn" onclick="openPostForm()">Post Your Event →</button>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-card"><div class="num">50+</div><div class="lbl">Colleges Listed</div></div>
+    <div class="stat-card"><div class="num">2,000+</div><div class="lbl">Student Registrations</div></div>
+    <div class="stat-card"><div class="num">100%</div><div class="lbl">Free to Post</div></div>
+  </div>
+  <h2 class="how-title">How it works</h2>
+  <div class="steps">
+    <div class="step"><span class="step-num">01</span><div><h3>Fill in your event details</h3><p>Add title, date, description, prize pool, and team size.</p></div></div>
+    <div class="step"><span class="step-num">02</span><div><h3>Post instantly</h3><p>Your event goes live immediately — no approval wait.</p></div></div>
+    <div class="step"><span class="step-num">03</span><div><h3>Students discover & register</h3><p>Students across Kerala find your event and register directly.</p></div></div>
+  </div>
+</main>
+
+<!-- EVENT DETAIL MODAL -->
+<div class="overlay" id="event-modal" onclick="closeModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <img class="modal-img" id="m-img" src="" alt="" />
+    <div class="modal-body">
+      <span class="modal-cat" id="m-cat"></span>
+      <h2 class="modal-title" id="m-title"></h2>
+      <p class="modal-meta" id="m-college"></p>
+      <p class="modal-meta" id="m-city"></p>
+      <p class="modal-desc" id="m-desc"></p>
+      <div class="modal-stats">
+        <div class="stat-box"><div class="stat-label">📅 Event Date</div><div class="stat-val" id="m-date"></div></div>
+        <div class="stat-box"><div class="stat-label">⏰ Deadline</div><div class="stat-val" id="m-deadline"></div></div>
+        <div class="stat-box"><div class="stat-label">👥 Team Size</div><div class="stat-val" id="m-team"></div></div>
+        <div class="stat-box"><div class="stat-label">🏆 Prize Pool</div><div class="stat-val" id="m-prize"></div></div>
+      </div>
+      <div class="modal-tags" id="m-tags"></div>
+      <button class="register-btn" id="m-reg-btn">Register Now →</button>
+      <button id="m-view-regs-btn" style="width:100%;margin-top:10px;background:transparent;border:1px solid #2a3050;border-radius:12px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;color:#7c8db5;transition:all 0.2s;"
+        onmouseover="this.style.borderColor='#00d4aa';this.style.color='#00d4aa'"
+        onmouseout="this.style.borderColor='#2a3050';this.style.color='#7c8db5'">
+        👥 View Registrations
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- POST EVENT MODAL -->
+<div class="post-form-overlay" id="post-form-overlay" onclick="closePostForm()">
+  <div class="post-form" onclick="event.stopPropagation()">
+    <div class="form-header">
+      <h2>Post an Event</h2>
+      <button class="close-btn" onclick="closePostForm()">×</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Event Title</label>
+        <input class="form-input" id="f-title" type="text" placeholder="e.g. HackKochi 2025" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">College Name</label>
+        <input class="form-input" id="f-college" type="text" placeholder="e.g. Model Engineering College" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select class="form-input" id="f-category">
+            <option>Hackathon</option>
+            <option>Tech Fest</option>
+            <option>Coding</option>
+            <option>Design</option>
+            <option>Entrepreneurship</option>
+            <option>Arts Fest</option>
+            <option>Robotics Battle</option>
+            <option>Cultural Fest</option>
+            <option>Game Dev</option>
+            <option>Sports Fest</option>
+            <option>Dept Fest</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">City</label>
+          <select class="form-input" id="f-city">
+            <option>Thiruvananthapuram</option>
+            <option>Kollam</option>
+            <option>Pathanamthitta</option>
+            <option>Alappuzha</option>
+            <option>Kottayam</option>
+            <option>Idukki</option>
+            <option>Ernakulam</option>
+            <option>Thrissur</option>
+            <option>Palakkad</option>
+            <option>Malappuram</option>
+            <option>Kozhikode</option>
+            <option>Wayanad</option>
+            <option>Kannur</option>
+            <option>Kasaragod</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Event Date</label>
+          <input class="form-input" id="f-date" type="date" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Registration Deadline</label>
+          <input class="form-input" id="f-deadline" type="date" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Prize Pool</label>
+          <input class="form-input" id="f-prize" type="text" placeholder="e.g. ₹50,000" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Team Size</label>
+          <input class="form-input" id="f-team" type="text" placeholder="e.g. 2-5" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tags (comma separated)</label>
+        <input class="form-input" id="f-tags" type="text" placeholder="e.g. AI, Robotics, IoT" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea class="form-input" id="f-desc" rows="4" placeholder="Describe your event..."></textarea>
+      </div>
+      <button class="post-btn" onclick="submitEvent()">Publish Event →</button>
+    </div>
+  </div>
+</div>
+
+<!-- REGISTRATION MODAL -->
+<div class="reg-overlay" id="reg-overlay" onclick="closeRegForm()">
+  <div class="reg-form" onclick="event.stopPropagation()">
+    <div id="reg-form-content">
+      <div class="reg-header">
+        <h2>Register for Event</h2>
+        <button class="close-btn" onclick="closeRegForm()">×</button>
+      </div>
+      <p class="reg-event-name" id="reg-event-name"></p>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input class="form-input" id="r-name" type="text" placeholder="e.g. Arjun Krishnan" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input class="form-input" id="r-email" type="email" placeholder="e.g. arjun@gmail.com" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone Number</label>
+          <input class="form-input" id="r-phone" type="tel" placeholder="e.g. 9876543210" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">College Name</label>
+          <input class="form-input" id="r-college" type="text" placeholder="e.g. Model Engineering College" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Department</label>
+            <input class="form-input" id="r-dept" type="text" placeholder="e.g. CSE" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Year of Study</label>
+            <select class="form-input" id="r-year">
+              <option value="">Select Year</option>
+              <option>1st Year</option>
+              <option>2nd Year</option>
+              <option>3rd Year</option>
+              <option>4th Year</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Team Name (if applicable)</label>
+          <input class="form-input" id="r-team" type="text" placeholder="e.g. CodeCrew (leave blank if solo)" />
+        </div>
+        <button class="post-btn" id="reg-submit-btn" onclick="submitRegistration()">Confirm Registration →</button>
+      </div>
+    </div>
+    <div class="success-box" id="reg-success">
+      <div class="tick">🎉</div>
+      <h3 id="success-title">You're Registered!</h3>
+      <p id="success-msg"></p>
+      <button onclick="closeRegForm()" style="margin-top:20px;background:#1a1f2e;border:none;color:#7c8db5;border-radius:10px;padding:10px 24px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const CAT_COLORS = {
+    "Hackathon":       "#22c55e",   // green
+    "Tech Fest":       "#f97316",   // orange
+    "Coding":          "#a855f7",   // purple
+    "Design":          "#ec4899",   // pink
+    "Entrepreneurship":"#eab308",   // yellow
+    "Arts Fest":       "#e879f9",   // fuchsia/violet
+    "Robotics Battle": "#ef4444",   // red
+    "Cultural Fest":   "#f43f5e",   // rose
+    "Game Dev":        "#06b6d4",   // cyan
+    "Sports Fest":     "#84cc16",   // lime green
+    "Dept Fest":       "#fb923c"    // amber-orange
+  };
+
+  const CAT_BG = {
+    "Hackathon":       "rgba(34,197,94,0.07)",
+    "Tech Fest":       "rgba(249,115,22,0.07)",
+    "Coding":          "rgba(168,85,247,0.07)",
+    "Design":          "rgba(236,72,153,0.07)",
+    "Entrepreneurship":"rgba(234,179,8,0.07)",
+    "Arts Fest":       "rgba(232,121,249,0.07)",
+    "Robotics Battle": "rgba(239,68,68,0.07)",
+    "Cultural Fest":   "rgba(244,63,94,0.07)",
+    "Game Dev":        "rgba(6,182,212,0.07)",
+    "Sports Fest":     "rgba(132,204,22,0.07)",
+    "Dept Fest":       "rgba(251,146,60,0.07)"
+  };
+
+  const CATEGORIES = ["All", "Hackathon", "Tech Fest", "Coding", "Design", "Entrepreneurship", "Arts Fest", "Robotics Battle", "Cultural Fest", "Game Dev", "Sports Fest", "Dept Fest"];
+
+  let events = [
+    // THIRUVANANTHAPURAM
+    { id:1, title:"TechFest 2025", college:"College of Engineering Trivandrum", city:"Thiruvananthapuram", category:"Tech Fest", date:"2026-03-15", deadline:"2026-03-10", description:"Kerala's biggest annual tech festival featuring robotics, coding, IoT workshops, and cultural nights.", image:"https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80", tags:["Robotics","AI","IoT","Coding"], teamSize:"1-4", prize:"₹1,00,000", registered:342 },
+    { id:101, title:"CyberSec Summit", college:"Indian Institute of Space Science and Technology", city:"Thiruvananthapuram", category:"Hackathon", date:"2026-06-10", deadline:"2026-06-05", description:"National-level cybersecurity hackathon hosted by IIST focusing on space data security and satellite communication vulnerabilities.", image:"https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=600&q=80", tags:["Cybersecurity","Space Tech","Networking"], teamSize:"2-4", prize:"₹80,000", registered:175 },
+    { id:102, title:"DevSprint TVM", college:"Mar Baselios College of Engineering and Technology", city:"Thiruvananthapuram", category:"Coding", date:"2026-07-05", deadline:"2026-06-28", description:"Intensive 24-hour development sprint for building full-stack web and mobile applications.", image:"https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=600&q=80", tags:["Full Stack","Web","Mobile"], teamSize:"1-3", prize:"₹30,000", registered:140 },
+    { id:103, title:"InnoTech Expo", college:"Mohandas College of Engineering and Technology", city:"Thiruvananthapuram", category:"Tech Fest", date:"2026-07-20", deadline:"2026-07-15", description:"Project exposition and tech fest open to all engineering students across Kerala.", image:"https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&q=80", tags:["Project Expo","Innovation","STEM"], teamSize:"1-5", prize:"₹40,000", registered:98 },
+
+    // KOLLAM
+    { id:2, title:"Startup Pitch Fest", college:"TKM College of Engineering", city:"Kollam", category:"Entrepreneurship", date:"2026-04-20", deadline:"2026-04-15", description:"Pitch your startup idea to investors and mentors from Kerala's top accelerators.", image:"https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=600&q=80", tags:["Startup","Business","Innovation"], teamSize:"1-5", prize:"₹2,00,000 + Funding", registered:67 },
+    { id:201, title:"Technolympics", college:"TKM Institute of Technology", city:"Kollam", category:"Tech Fest", date:"2026-05-25", deadline:"2026-05-20", description:"Multi-event tech fest with robotics, hackathon, quiz, and paper presentation competitions.", image:"https://images.unsplash.com/photo-1531482615713-2afd69097998?w=600&q=80", tags:["Robotics","Quiz","Paper Presentation"], teamSize:"1-4", prize:"₹55,000", registered:210 },
+    { id:202, title:"KodeWar Kollam", college:"Baselios Mathews II College of Engineering", city:"Kollam", category:"Coding", date:"2026-06-07", deadline:"2026-06-01", description:"Competitive coding contest with multi-round elimination and real-time leaderboards.", image:"https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&q=80", tags:["DSA","Competitive Programming","Python"], teamSize:"1-2", prize:"₹20,000", registered:130 },
+
+    // PATHANAMTHITTA
+    { id:301, title:"AEC HackNight", college:"AEC College of Engineering Aranmula", city:"Pathanamthitta", category:"Hackathon", date:"2026-05-30", deadline:"2026-05-25", description:"Overnight hackathon at AEC, focusing on agritech, rural healthcare, and education innovation.", image:"https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=600&q=80", tags:["AgriTech","Healthcare","EdTech"], teamSize:"2-4", prize:"₹45,000", registered:88 },
+    { id:302, title:"Mount Zion TechArena", college:"Mount Zion College of Engineering", city:"Pathanamthitta", category:"Tech Fest", date:"2026-06-20", deadline:"2026-06-14", description:"Annual tech fest at Mount Zion featuring hardware design, coding contests, and paper presentations.", image:"https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&q=80", tags:["Hardware","Coding","Research"], teamSize:"1-5", prize:"₹35,000", registered:76 },
+
+    // ALAPPUZHA
+    { id:401, title:"Sree Buddha HackFest", college:"Sree Buddha College of Engineering", city:"Alappuzha", category:"Hackathon", date:"2026-05-17", deadline:"2026-05-12", description:"Hackathon addressing smart water management and coastal community challenges unique to Alappuzha.", image:"https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&q=80", tags:["Water Tech","Coastal","Smart City"], teamSize:"2-5", prize:"₹50,000", registered:95 },
+    { id:402, title:"CEC CodeFest", college:"College of Engineering Cherthala", city:"Alappuzha", category:"Coding", date:"2026-06-28", deadline:"2026-06-22", description:"Coding competition open to all Kerala students with problems across beginner, intermediate, and expert levels.", image:"https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&q=80", tags:["C++","Java","Python"], teamSize:"1-2", prize:"₹22,000", registered:115 },
+
+    // KOTTAYAM
+    { id:501, title:"Amal Jyothi TechX", college:"Amal Jyothi College of Engineering", city:"Kottayam", category:"Tech Fest", date:"2026-04-26", deadline:"2026-04-20", description:"Premier tech fest of central Kerala, featuring AI workshops, hackathon, robo-wars, and cultural events.", image:"https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80", tags:["AI","Robotics","Workshop"], teamSize:"1-5", prize:"₹90,000", registered:320 },
+    { id:502, title:"Saintgits Innovate", college:"Saintgits College of Engineering", city:"Kottayam", category:"Entrepreneurship", date:"2026-05-10", deadline:"2026-05-04", description:"Startup showcase and entrepreneurship summit with mentors from Kerala's startup ecosystem.", image:"https://images.unsplash.com/photo-1552664730-d307ca884978?w=600&q=80", tags:["Startup","Mentorship","Pitch"], teamSize:"1-4", prize:"₹60,000", registered:82 },
+    { id:503, title:"IIIT Kottayam AlgoFest", college:"Indian Institute of Information Technology Kottayam", city:"Kottayam", category:"Coding", date:"2026-06-05", deadline:"2026-05-30", description:"National-level competitive programming event hosted by IIIT Kottayam with participation from across India.", image:"https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&q=80", tags:["Algorithms","Graphs","DP"], teamSize:"1-2", prize:"₹1,00,000", registered:450 },
+
+    // IDUKKI
+    { id:601, title:"GEC Idukki HackFest", college:"Government Engineering College Idukki", city:"Idukki", category:"Hackathon", date:"2026-05-10", deadline:"2026-05-05", description:"Annual hackathon by GEC Idukki inviting students to build tech solutions for hill district challenges — connectivity, agriculture, and eco-tourism.", image:"https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&q=80", tags:["Rural Tech","Agriculture","IoT"], teamSize:"2-4", prize:"₹60,000", registered:112 },
+    { id:602, title:"TechVista 2025", college:"Mar Baselios Christian College of Engineering and Technology", city:"Idukki", category:"Tech Fest", date:"2026-05-18", deadline:"2026-05-12", description:"Multi-day tech fest featuring paper presentations, project expos, coding contests, and robotics events.", image:"https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&q=80", tags:["Robotics","Paper Presentation","Project Expo"], teamSize:"1-5", prize:"₹45,000", registered:88 },
+    { id:603, title:"CodeSprint Thodupuzha", college:"University College of Engineering Thodupuzha", city:"Idukki", category:"Coding", date:"2026-06-01", deadline:"2026-05-26", description:"Fast-paced competitive coding event testing algorithmic thinking and problem solving under time pressure.", image:"https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=600&q=80", tags:["Competitive Programming","Python","Java"], teamSize:"1-2", prize:"₹25,000", registered:74 },
+    { id:604, title:"InnovatED Startup Challenge", college:"Al Azhar College of Engineering and Technology", city:"Idukki", category:"Entrepreneurship", date:"2026-06-14", deadline:"2026-06-08", description:"Startup ideation challenge encouraging students to pitch innovative solutions for Kerala's highland communities.", image:"https://images.unsplash.com/photo-1552664730-d307ca884978?w=600&q=80", tags:["Startup","Innovation","Pitching"], teamSize:"1-4", prize:"₹35,000", registered:53 },
+    { id:605, title:"MunnarHack 2025", college:"College of Engineering Munnar", city:"Idukki", category:"Hackathon", date:"2026-06-21", deadline:"2026-06-15", description:"Hackathon set in the scenic highlands of Munnar, challenging students to build tech solutions for eco-tourism, tea industry automation, and sustainable hill living.", image:"https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=600&q=80", tags:["Eco-Tech","Sustainability","IoT"], teamSize:"2-4", prize:"₹50,000", registered:38 },
+
+    // ERNAKULAM
+    { id:701, title:"HackKochi 2025", college:"Model Engineering College", city:"Ernakulam", category:"Hackathon", date:"2026-03-22", deadline:"2026-03-18", description:"36-hour hackathon focused on solving real-world problems in healthcare, agriculture, and fintech.", image:"https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=600&q=80", tags:["Healthcare","FinTech","Agriculture"], teamSize:"2-5", prize:"₹75,000", registered:218 },
+    { id:702, title:"Ignite'25 Design Sprint", college:"Rajagiri School of Engineering", city:"Ernakulam", category:"Design", date:"2026-04-05", deadline:"2026-04-01", description:"UI/UX design competition challenging students to reimagine public service apps for Kerala.", image:"https://images.unsplash.com/photo-1561070791-2526d30994b5?w=600&q=80", tags:["UI/UX","Figma","Prototyping"], teamSize:"1-3", prize:"₹30,000", registered:95 },
+    { id:703, title:"CUSAT TechWeek", college:"Cochin University of Science and Technology", city:"Ernakulam", category:"Tech Fest", date:"2026-05-08", deadline:"2026-05-02", description:"Week-long tech extravaganza at CUSAT with workshops, paper presentations, project expo, and hackathon.", image:"https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80", tags:["Research","AI","Data Science"], teamSize:"1-5", prize:"₹1,50,000", registered:580 },
+    { id:704, title:"FISAT CodeJam", college:"Federal Institute of Science and Technology", city:"Ernakulam", category:"Coding", date:"2026-05-24", deadline:"2026-05-18", description:"Online and onsite coding rounds testing logic, problem solving, and speed coding.", image:"https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&q=80", tags:["Algorithms","Web Dev","Python"], teamSize:"1-3", prize:"₹35,000", registered:195 },
+    { id:705, title:"MACE Design Jam", college:"MA College of Engineering", city:"Ernakulam", category:"Design", date:"2026-06-12", deadline:"2026-06-06", description:"48-hour product design sprint focused on designing solutions for everyday Kerala problems.", image:"https://images.unsplash.com/photo-1561070791-2526d30994b5?w=600&q=80", tags:["Product Design","UI/UX","Prototyping"], teamSize:"1-3", prize:"₹28,000", registered:72 },
+
+    // THRISSUR
+    { id:801, title:"CodeStorm Hackathon", college:"Government Engineering College Thrissur", city:"Thrissur", category:"Hackathon", date:"2026-04-12", deadline:"2026-04-08", description:"Competitive programming and system design hackathon open to all Kerala colleges.", image:"https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&q=80", tags:["DSA","System Design","Backend"], teamSize:"2-4", prize:"₹50,000", registered:180 },
+    { id:802, title:"Vidya Tech Carnival", college:"Vidya Academy of Science and Technology", city:"Thrissur", category:"Tech Fest", date:"2026-05-03", deadline:"2026-04-27", description:"Annual tech carnival featuring robo race, circuit design, app development, and science quiz.", image:"https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&q=80", tags:["Robotics","Electronics","Quiz"], teamSize:"1-4", prize:"₹60,000", registered:245 },
+    { id:803, title:"Jyothi HackFest", college:"Jyothi Engineering College", city:"Thrissur", category:"Hackathon", date:"2026-06-14", deadline:"2026-06-08", description:"Theme-based hackathon focused on sustainable tech and green energy solutions.", image:"https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=600&q=80", tags:["Green Tech","Sustainability","IoT"], teamSize:"2-4", prize:"₹42,000", registered:110 },
+
+    // PALAKKAD
+    { id:901, title:"AlgoArena Championship", college:"NSS College of Engineering Palakkad", city:"Palakkad", category:"Coding", date:"2026-05-03", deadline:"2026-04-28", description:"Competitive programming contest with algorithmic challenges ranging from beginner to expert level.", image:"https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&q=80", tags:["Algorithms","Competitive Programming","C++","Python"], teamSize:"1-2", prize:"₹40,000", registered:250 },
+    { id:902, title:"IIT Palakkad TechSummit", college:"IIT Palakkad", city:"Palakkad", category:"Tech Fest", date:"2026-04-18", deadline:"2026-04-12", description:"Annual technical summit at IIT Palakkad with research talks, workshops, and inter-college competitions.", image:"https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80", tags:["Research","AI/ML","Robotics"], teamSize:"1-5", prize:"₹2,00,000", registered:680 },
+    { id:903, title:"Ahalia Innothon", college:"Ahalia School of Engineering and Technology", city:"Palakkad", category:"Hackathon", date:"2026-06-21", deadline:"2026-06-15", description:"Innovation hackathon with tracks in healthcare, agriculture, and smart transportation.", image:"https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&q=80", tags:["Healthcare","AgriTech","Transport"], teamSize:"2-4", prize:"₹38,000", registered:92 },
+
+    // MALAPPURAM
+    { id:1001, title:"MES TechFusion", college:"MES College of Engineering", city:"Malappuram", category:"Tech Fest", date:"2026-04-25", deadline:"2026-04-19", description:"Inter-college tech fest with competitions in coding, hardware design, AI, and drone racing.", image:"https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&q=80", tags:["Drone Racing","AI","Hardware"], teamSize:"1-4", prize:"₹70,000", registered:290 },
+    { id:1002, title:"MEA HackBuild", college:"MEA Engineering College", city:"Malappuram", category:"Hackathon", date:"2026-05-16", deadline:"2026-05-10", description:"Build-a-thon event where teams design and prototype functional IoT devices within 24 hours.", image:"https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=600&q=80", tags:["IoT","Prototyping","Embedded"], teamSize:"2-5", prize:"₹55,000", registered:140 },
+    { id:1003, title:"CALICUT UNIV CodeChamp", college:"Calicut University Institute of Engineering and Technology", city:"Malappuram", category:"Coding", date:"2026-06-07", deadline:"2026-06-01", description:"University-level coding championship for students across all Calicut University affiliated colleges.", image:"https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&q=80", tags:["Competitive Programming","Algorithms","JS"], teamSize:"1-2", prize:"₹30,000", registered:320 },
+
+    // KOZHIKODE
+    { id:1101, title:"NIT Calicut Hackathon", college:"NIT Calicut", city:"Kozhikode", category:"Hackathon", date:"2026-04-04", deadline:"2026-03-28", description:"Flagship hackathon at NIT Calicut open to national participants with tracks in AI, blockchain, and fintech.", image:"https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&q=80", tags:["AI","Blockchain","FinTech"], teamSize:"2-4", prize:"₹3,00,000", registered:750 },
+    { id:1102, title:"KMCT DesignFest", college:"KMCT College of Engineering", city:"Kozhikode", category:"Design", date:"2026-05-22", deadline:"2026-05-16", description:"UI/UX and graphic design competitions encouraging students to create impactful visual tech solutions.", image:"https://images.unsplash.com/photo-1561070791-2526d30994b5?w=600&q=80", tags:["UI/UX","Graphic Design","Branding"], teamSize:"1-3", prize:"₹32,000", registered:105 },
+    { id:1103, title:"AWH TechNova", college:"AWH Engineering College", city:"Kozhikode", category:"Tech Fest", date:"2026-06-06", deadline:"2026-05-30", description:"Annual tech fest at AWH covering robotics, coding, paper presentations, and project showcases.", image:"https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80", tags:["Robotics","Project Expo","Coding"], teamSize:"1-5", prize:"₹50,000", registered:185 },
+
+    // WAYANAD
+    { id:1201, title:"GKMCE HillHack", college:"Government College of Engineering Mananthavady", city:"Wayanad", category:"Hackathon", date:"2026-05-31", deadline:"2026-05-25", description:"Hackathon tackling issues unique to Wayanad — tribal welfare, forest conservation, and eco-agriculture.", image:"https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=600&q=80", tags:["Tribal Tech","Forest","Eco-Agri"], teamSize:"2-4", prize:"₹40,000", registered:65 },
+    { id:1202, title:"WayanadTech Expo", college:"Government Polytechnic College Mananthavady", city:"Wayanad", category:"Tech Fest", date:"2026-07-12", deadline:"2026-07-06", description:"Regional tech expo showcasing student projects focused on hill community development and tribal innovation.", image:"https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&q=80", tags:["Community Tech","Tribal Innovation","Sustainability"], teamSize:"1-5", prize:"₹25,000", registered:48 },
+
+    // KANNUR
+    { id:1301, title:"GCE Kannur CodeFest", college:"Government College of Engineering Kannur", city:"Kannur", category:"Coding", date:"2026-05-09", deadline:"2026-05-03", description:"Coding fest featuring competitive programming, web hackathon, and open-source contribution sprint.", image:"https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&q=80", tags:["Open Source","Web","Competitive"], teamSize:"1-3", prize:"₹45,000", registered:165 },
+    { id:1302, title:"Thalassery TechRise", college:"College of Engineering Thalassery", city:"Kannur", category:"Tech Fest", date:"2026-06-13", deadline:"2026-06-07", description:"Multi-event tech fest with hardware, software, and management events catering to all engineering disciplines.", image:"https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80", tags:["Hardware","Management","Software"], teamSize:"1-4", prize:"₹48,000", registered:130 },
+    { id:1303, title:"SNG Payyanur Hackathon", college:"Sree Narayana Guru College of Engineering Payyanur", city:"Kannur", category:"Hackathon", date:"2026-07-05", deadline:"2026-06-28", description:"Social impact hackathon focused on fishermen welfare, coastal safety, and marine technology.", image:"https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&q=80", tags:["Marine Tech","Social Impact","Coastal"], teamSize:"2-4", prize:"₹36,000", registered:79 },
+
+    // KASARAGOD
+    { id:1401, title:"LBS Kasaragod CodeWar", college:"LBS College of Engineering Kasaragod", city:"Kasaragod", category:"Coding", date:"2026-05-23", deadline:"2026-05-17", description:"Competitive coding event open to all Kerala colleges with live leaderboard and team elimination rounds.", image:"https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&q=80", tags:["Algorithms","Problem Solving","C++"], teamSize:"1-2", prize:"₹28,000", registered:145 },
+    { id:1402, title:"St. Gregorios InnoFest", college:"St. Gregorios College of Engineering", city:"Kasaragod", category:"Tech Fest", date:"2026-06-28", deadline:"2026-06-22", description:"Annual innovation fest featuring project expo, paper presentations, app development, and quiz.", image:"https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&q=80", tags:["Project Expo","Innovation","App Dev"], teamSize:"1-5", prize:"₹32,000", registered:88 },
+
+    // ARTS FEST
+    { id:1501, title:"Kalolsavam 2026", college:"College of Engineering Trivandrum", city:"Thiruvananthapuram", category:"Arts Fest", date:"2026-03-20", deadline:"2026-03-14", description:"Grand inter-collegiate arts festival celebrating classical dance, music, drama, painting, and literary events.", image:"https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&q=80", tags:["Dance","Music","Drama","Painting"], teamSize:"1-10", prize:"₹80,000", registered:420 },
+    { id:1502, title:"Sargam Music Fest", college:"Model Engineering College", city:"Ernakulam", category:"Arts Fest", date:"2026-04-11", deadline:"2026-04-05", description:"All-Kerala inter-collegiate music competition featuring classical, folk, fusion, and western music categories.", image:"https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&q=80", tags:["Classical Music","Folk","Western","Fusion"], teamSize:"1-6", prize:"₹60,000", registered:310 },
+    { id:1503, title:"Rang De — Arts Festival", college:"NIT Calicut", city:"Kozhikode", category:"Arts Fest", date:"2026-04-25", deadline:"2026-04-19", description:"Vibrant arts festival at NIT Calicut featuring street plays, stand-up comedy, fine arts, and photography contests.", image:"https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=600&q=80", tags:["Street Play","Photography","Fine Arts","Comedy"], teamSize:"1-8", prize:"₹75,000", registered:520 },
+    { id:1504, title:"Natya Utsav", college:"Government College of Engineering Thrissur", city:"Thrissur", category:"Arts Fest", date:"2026-05-09", deadline:"2026-05-03", description:"Inter-collegiate dance festival showcasing Bharatanatyam, Mohiniyattam, Kathak, and contemporary dance forms.", image:"https://images.unsplash.com/photo-1518834107812-67b0b7c58434?w=600&q=80", tags:["Bharatanatyam","Mohiniyattam","Contemporary Dance"], teamSize:"1-12", prize:"₹55,000", registered:280 },
+    { id:1505, title:"Chitrakala 2026", college:"Amal Jyothi College of Engineering", city:"Kottayam", category:"Arts Fest", date:"2026-05-17", deadline:"2026-05-11", description:"Fine arts and creative expression festival with events in sketching, digital art, poster making, and sculpture.", image:"https://images.unsplash.com/photo-1536924940846-227afb31e2a5?w=600&q=80", tags:["Sketching","Digital Art","Sculpture","Poster Making"], teamSize:"1-3", prize:"₹40,000", registered:195 },
+    { id:1506, title:"MunnarArts Highland Fest", college:"College of Engineering Munnar", city:"Idukki", category:"Arts Fest", date:"2026-06-06", deadline:"2026-05-31", description:"Unique arts fest set in the misty highlands of Munnar celebrating tribal art, nature photography, folk music, and eco-inspired paintings.", image:"https://images.unsplash.com/photo-1499781350541-7783f6c6a0c8?w=600&q=80", tags:["Tribal Art","Folk Music","Nature Photography","Eco Art"], teamSize:"1-6", prize:"₹35,000", registered:145 },
+    { id:1507, title:"LBS Kasaragod Kala Mela", college:"LBS College of Engineering Kasaragod", city:"Kasaragod", category:"Arts Fest", date:"2026-06-27", deadline:"2026-06-21", description:"Cultural extravaganza featuring Yakshagana, Theyyam performances, classical music, and inter-college drama competitions.", image:"https://images.unsplash.com/photo-1571266752177-92d2a29f1c15?w=600&q=80", tags:["Yakshagana","Theyyam","Classical","Drama"], teamSize:"1-15", prize:"₹50,000", registered:230 },
+
+    // ROBOTICS BATTLE
+    { id:1601, title:"RoboWar Kerala 2026", college:"College of Engineering Trivandrum", city:"Thiruvananthapuram", category:"Robotics Battle", date:"2026-03-28", deadline:"2026-03-22", description:"Kerala's premier combat robotics championship where teams build and battle custom-designed robots in an arena. Categories include Sumo, Line Follower, and Full Combat.", image:"https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&q=80", tags:["Combat Robots","Sumo Bot","Line Follower"], teamSize:"2-5", prize:"₹1,20,000", registered:185 },
+    { id:1602, title:"BotBrawl Kochi", college:"Model Engineering College", city:"Ernakulam", category:"Robotics Battle", date:"2026-04-18", deadline:"2026-04-12", description:"High-octane robot battle event at MEC featuring weight categories, obstacle courses, and autonomous bot challenges.", image:"https://images.unsplash.com/photo-1531482615713-2afd69097998?w=600&q=80", tags:["Autonomous Bots","Obstacle Course","Battle Arena"], teamSize:"2-4", prize:"₹90,000", registered:210 },
+    { id:1603, title:"NIT Robo Rumble", college:"NIT Calicut", city:"Kozhikode", category:"Robotics Battle", date:"2026-05-02", deadline:"2026-04-26", description:"National-level robotics battle at NIT Calicut with tracks in RC combat, drone racing, and autonomous navigation.", image:"https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=80", tags:["Drone Racing","RC Combat","Autonomous Navigation"], teamSize:"2-5", prize:"₹2,00,000", registered:340 },
+    { id:1604, title:"IIT Palakkad RoboClash", college:"IIT Palakkad", city:"Palakkad", category:"Robotics Battle", date:"2026-05-16", deadline:"2026-05-10", description:"Flagship robotics battle at IIT Palakkad featuring full-combat robots, micro-mouse maze solving, and robo-soccer.", image:"https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&q=80", tags:["Full Combat","Micro Mouse","Robo Soccer"], teamSize:"2-5", prize:"₹1,50,000", registered:290 },
+    { id:1605, title:"MunnarMech Battle", college:"College of Engineering Munnar", city:"Idukki", category:"Robotics Battle", date:"2026-06-13", deadline:"2026-06-07", description:"Robotics battle competition in the hills of Munnar featuring terrain-challenge bots, sumo wrestling robots, and remote-controlled combat.", image:"https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=80", tags:["Terrain Bots","Sumo","RC Combat"], teamSize:"2-4", prize:"₹55,000", registered:98 },
+    { id:1606, title:"Thrissur BotFight Championship", college:"Vidya Academy of Science and Technology", city:"Thrissur", category:"Robotics Battle", date:"2026-07-04", deadline:"2026-06-28", description:"Inter-college robot fighting championship with elimination rounds, live commentary, and crowd-voted best design award.", image:"https://images.unsplash.com/photo-1531482615713-2afd69097998?w=600&q=80", tags:["Elimination Rounds","Bot Design","Combat"], teamSize:"2-5", prize:"₹70,000", registered:155 },
+    { id:1607, title:"GEC Kannur RoboArena", college:"Government College of Engineering Kannur", city:"Kannur", category:"Robotics Battle", date:"2026-07-19", deadline:"2026-07-13", description:"Robotics arena event featuring line follower races, wall-follower bots, and head-to-head combat rounds.", image:"https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&q=80", tags:["Line Follower","Wall Follower","Combat"], teamSize:"2-4", prize:"₹45,000", registered:120 },
+
+    // CULTURAL FEST
+    { id:1701, title:"Tarang 2026", college:"NIT Calicut", city:"Kozhikode", category:"Cultural Fest", date:"2026-03-21", deadline:"2026-03-15", description:"NIT Calicut's iconic cultural extravaganza with celebrity performances, band night, fashion show, stand-up comedy, and inter-college cultural competitions.", image:"https://images.unsplash.com/photo-1506157786151-b8491531f063?w=600&q=80", tags:["Band Night","Fashion Show","Stand-up","Dance"], teamSize:"1-15", prize:"₹1,50,000", registered:850 },
+    { id:1702, title:"Wavelength Fest", college:"Model Engineering College", city:"Ernakulam", category:"Cultural Fest", date:"2026-04-10", deadline:"2026-04-04", description:"MEC's annual cultural festival featuring music battles, solo singing, group dance, mime, street play, and film screening.", image:"https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?w=600&q=80", tags:["Music Battle","Group Dance","Mime","Film Screening"], teamSize:"1-12", prize:"₹90,000", registered:630 },
+    { id:1703, title:"Darpan Cultural Nite", college:"Government Engineering College Thrissur", city:"Thrissur", category:"Cultural Fest", date:"2026-05-08", deadline:"2026-05-02", description:"Inter-collegiate cultural night showcasing folk art, fusion music, spoken word poetry, and theatrical performances.", image:"https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&q=80", tags:["Folk Art","Fusion Music","Poetry","Theatre"], teamSize:"1-10", prize:"₹65,000", registered:420 },
+    { id:1704, title:"Unnati Cultural Fest", college:"College of Engineering Trivandrum", city:"Thiruvananthapuram", category:"Cultural Fest", date:"2026-05-22", deadline:"2026-05-16", description:"CET's flagship cultural festival with celebrity artist performances, nukkad natak, western music, and quiz nights.", image:"https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=600&q=80", tags:["Nukkad Natak","Western Music","Quiz","Celebrity Night"], teamSize:"1-15", prize:"₹1,00,000", registered:720 },
+    { id:1705, title:"Sangamam 2026", college:"Amal Jyothi College of Engineering", city:"Kottayam", category:"Cultural Fest", date:"2026-06-06", deadline:"2026-05-31", description:"Vibrant cultural fest with classical and western events, DJ night, face painting, and street food carnival.", image:"https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&q=80", tags:["DJ Night","Classical","Western","Street Food"], teamSize:"1-10", prize:"₹70,000", registered:510 },
+    { id:1706, title:"Pahadi Cultural Night", college:"College of Engineering Munnar", city:"Idukki", category:"Cultural Fest", date:"2026-06-20", deadline:"2026-06-14", description:"Unique highland cultural evening celebrating Kerala's diverse tribal heritage through dance, music, storytelling, and local cuisine.", image:"https://images.unsplash.com/photo-1560439514-4e9645039924?w=600&q=80", tags:["Tribal Heritage","Storytelling","Folk Dance","Local Cuisine"], teamSize:"1-8", prize:"₹40,000", registered:195 },
+
+    // GAME DEV
+    { id:1801, title:"GameJam Kerala 2026", college:"CUSAT", city:"Ernakulam", category:"Game Dev", date:"2026-04-03", deadline:"2026-03-28", description:"48-hour game development jam where teams design, build, and present a playable game from scratch. Tracks for 2D, 3D, and mobile games.", image:"https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&q=80", tags:["Unity","Unreal","Mobile","2D/3D"], teamSize:"1-4", prize:"₹80,000", registered:230 },
+    { id:1802, title:"PixelForge Challenge", college:"Rajagiri School of Engineering", city:"Ernakulam", category:"Game Dev", date:"2026-05-02", deadline:"2026-04-26", description:"Game design competition focusing on indie game development using Unity or Godot — judged on gameplay, storytelling, and innovation.", image:"https://images.unsplash.com/photo-1511512578047-dfb367046420?w=600&q=80", tags:["Unity","Godot","Indie Game","Storytelling"], teamSize:"1-3", prize:"₹55,000", registered:165 },
+    { id:1803, title:"NIT GameDevThon", college:"NIT Calicut", city:"Kozhikode", category:"Game Dev", date:"2026-05-23", deadline:"2026-05-17", description:"National-level game development hackathon with categories in AR/VR games, puzzle games, and educational games.", image:"https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=600&q=80", tags:["AR/VR","Puzzle","Educational Games","Unity"], teamSize:"2-4", prize:"₹1,20,000", registered:310 },
+    { id:1804, title:"IIT Palakkad GameBuild", college:"IIT Palakkad", city:"Palakkad", category:"Game Dev", date:"2026-06-13", deadline:"2026-06-07", description:"Game development sprint focused on simulation and strategy games, with mentorship from indie game developers.", image:"https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&q=80", tags:["Simulation","Strategy","Mentorship","C#"], teamSize:"1-4", prize:"₹90,000", registered:185 },
+    { id:1805, title:"MunnarGame Jam", college:"College of Engineering Munnar", city:"Idukki", category:"Game Dev", date:"2026-07-04", deadline:"2026-06-28", description:"Weekend game jam in Munnar's scenic setting — build a nature or environment-themed game within 36 hours.", image:"https://images.unsplash.com/photo-1511512578047-dfb367046420?w=600&q=80", tags:["Nature Theme","36-Hour Jam","Indie","Environment"], teamSize:"1-3", prize:"₹35,000", registered:88 },
+    { id:1806, title:"TKM GameForge", college:"TKM College of Engineering", city:"Kollam", category:"Game Dev", date:"2026-07-18", deadline:"2026-07-12", description:"Game development contest open to all Kerala college students with tracks for beginners and advanced developers.", image:"https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=600&q=80", tags:["Beginner Friendly","Advanced","Game Design","Pygame"], teamSize:"1-3", prize:"₹42,000", registered:140 },
+
+    // SPORTS FEST
+    { id:1901, title:"Sportsmania 2026", college:"NIT Calicut", city:"Kozhikode", category:"Sports Fest", date:"2026-03-27", deadline:"2026-03-21", description:"NIT Calicut's mega sports festival with inter-college competitions in cricket, football, basketball, badminton, chess, and athletics.", image:"https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=600&q=80", tags:["Cricket","Football","Basketball","Athletics"], teamSize:"1-15", prize:"₹2,00,000", registered:950 },
+    { id:1902, title:"CUSAT SportsFest", college:"CUSAT", city:"Ernakulam", category:"Sports Fest", date:"2026-04-17", deadline:"2026-04-11", description:"All-Kerala inter-collegiate sports meet covering team sports, individual athletics, aquatics, and indoor games.", image:"https://images.unsplash.com/photo-1568515045052-f9a854d70bfd?w=600&q=80", tags:["Athletics","Swimming","Volleyball","Table Tennis"], teamSize:"1-15", prize:"₹1,50,000", registered:780 },
+    { id:1903, title:"IIT Palakkad Sports Meet", college:"IIT Palakkad", city:"Palakkad", category:"Sports Fest", date:"2026-05-15", deadline:"2026-05-09", description:"Annual sports meet at IIT Palakkad featuring track events, field sports, racquet sports, and e-sports.", image:"https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=600&q=80", tags:["Track","Field","E-Sports","Racquet Sports"], teamSize:"1-12", prize:"₹1,20,000", registered:620 },
+    { id:1904, title:"CET Sports Carnival", college:"College of Engineering Trivandrum", city:"Thiruvananthapuram", category:"Sports Fest", date:"2026-05-29", deadline:"2026-05-23", description:"Weekend sports carnival with friendly inter-college matches, fun runs, tug-of-war, and sports quiz.", image:"https://images.unsplash.com/photo-1568515045052-f9a854d70bfd?w=600&q=80", tags:["Fun Run","Tug of War","Football","Sports Quiz"], teamSize:"1-15", prize:"₹80,000", registered:430 },
+    { id:1905, title:"Amal Jyothi Premier League", college:"Amal Jyothi College of Engineering", city:"Kottayam", category:"Sports Fest", date:"2026-06-19", deadline:"2026-06-13", description:"Cricket and football inter-college tournament in T20 format with a prize for best player, best team, and sportsmanship.", image:"https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=600&q=80", tags:["Cricket","Football","T20","Best Player Award"], teamSize:"5-15", prize:"₹75,000", registered:360 },
+    { id:1906, title:"Highland Sports Fest Munnar", college:"College of Engineering Munnar", city:"Idukki", category:"Sports Fest", date:"2026-07-11", deadline:"2026-07-05", description:"Sports fest in Munnar's cool climate featuring adventure sports, trekking challenge, football, and kabaddi competitions.", image:"https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=600&q=80", tags:["Adventure Sports","Trekking","Football","Kabaddi"], teamSize:"1-15", prize:"₹50,000", registered:210 },
+
+    // DEPT FEST
+    { id:2001, title:"CSE Symposium 2026", college:"College of Engineering Trivandrum", city:"Thiruvananthapuram", category:"Dept Fest", date:"2026-03-14", deadline:"2026-03-08", description:"Computer Science department fest with paper presentations, coding contests, project expo, and AI/ML workshops exclusively for CS students.", image:"https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&q=80", tags:["CSE","AI/ML","Paper Presentation","Project Expo"], teamSize:"1-4", prize:"₹35,000", registered:285 },
+    { id:2002, title:"ECE Technica", college:"Model Engineering College", city:"Ernakulam", category:"Dept Fest", date:"2026-04-09", deadline:"2026-04-03", description:"Electronics & Communication department fest featuring circuit design, signal processing, embedded systems, and PCB design competitions.", image:"https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=80", tags:["ECE","PCB Design","Embedded","Signal Processing"], teamSize:"1-3", prize:"₹30,000", registered:195 },
+    { id:2003, title:"Civil Conclave 2026", college:"NIT Calicut", city:"Kozhikode", category:"Dept Fest", date:"2026-04-24", deadline:"2026-04-18", description:"Civil Engineering department event with CAD design, structural model competitions, surveying challenges, and smart city planning hackathon.", image:"https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&q=80", tags:["Civil","CAD","Structural Design","Smart City"], teamSize:"1-4", prize:"₹40,000", registered:165 },
+    { id:2004, title:"Mech Fiesta", college:"Government Engineering College Thrissur", city:"Thrissur", category:"Dept Fest", date:"2026-05-07", deadline:"2026-05-01", description:"Mechanical Engineering department fest with go-kart racing, CAD modelling, machine design quiz, and industrial visit.", image:"https://images.unsplash.com/photo-1581093458791-9d15482442f6?w=600&q=80", tags:["Mechanical","Go-Kart","CAD","Machine Design"], teamSize:"1-5", prize:"₹45,000", registered:220 },
+    { id:2005, title:"EEE Electronica", college:"IIT Palakkad", city:"Palakkad", category:"Dept Fest", date:"2026-05-21", deadline:"2026-05-15", description:"Electrical Engineering department symposium with power systems design challenge, energy audit competition, and smart grid hackathon.", image:"https://images.unsplash.com/photo-1509391366360-2e959784a276?w=600&q=80", tags:["EEE","Power Systems","Smart Grid","Energy Audit"], teamSize:"1-3", prize:"₹38,000", registered:145 },
+    { id:2006, title:"CS&IT Synergia", college:"Amal Jyothi College of Engineering", city:"Kottayam", category:"Dept Fest", date:"2026-06-05", deadline:"2026-05-30", description:"IT and CS department fest featuring web dev sprint, database design challenge, cybersecurity capture-the-flag, and open-source sprint.", image:"https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=600&q=80", tags:["Web Dev","CTF","Database","Open Source"], teamSize:"1-3", prize:"₹32,000", registered:175 },
+    { id:2007, title:"MunnarBuild Dept Fest", college:"College of Engineering Munnar", city:"Idukki", category:"Dept Fest", date:"2026-06-26", deadline:"2026-06-20", description:"Multi-department fest at CE Munnar covering CS, EC, and Civil branches with paper presentations, project showcases, and mini-hackathons.", image:"https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&q=80", tags:["Multi-Dept","Paper Presentation","Mini Hackathon","Project Showcase"], teamSize:"1-4", prize:"₹28,000", registered:105 }
+  ];
+
+  // --- TAB SWITCHING ---
+  function switchTab(tab) {
+    document.getElementById('browse-tab').classList.toggle('hidden', tab !== 'browse');
+    document.getElementById('post-tab').style.display = tab === 'post' ? 'block' : 'none';
+    document.getElementById('btn-browse').classList.toggle('active', tab === 'browse');
+    document.getElementById('btn-post').classList.toggle('active', tab === 'post');
+  }
+
+  // --- PILLS ---
+  function buildPills() {
+    const container = document.getElementById('pills');
+    const activeCat = document.getElementById('cat-filter').value;
+    container.innerHTML = CATEGORIES.map(c => {
+      const color = CAT_COLORS[c] || '#00d4aa';
+      const isActive = activeCat === c;
+      return `<button class="pill" style="background:${isActive ? color : 'transparent'};color:${isActive ? '#000' : color};border:1.5px solid ${c === 'All' ? '#3a4460' : (color)};opacity:${c === 'All' && !isActive ? '0.5' : '1'}" onclick="setCategory('${c}')">${c}</button>`;
+    }).join('');
+  }
+
+  function setCategory(cat) {
+    document.getElementById('cat-filter').value = cat;
+    renderEvents();
+  }
+
+  // --- RENDER EVENTS ---
+  function renderEvents() {
+    const search = document.getElementById('search-input').value.toLowerCase();
+    const cat = document.getElementById('cat-filter').value;
+    const city = document.getElementById('city-filter').value;
+
+    buildPills();
+
+    const filtered = events.filter(e =>
+      !e.hidden &&
+      (cat === 'All' || e.category === cat) &&
+      (city === 'All Cities' || e.city === city) &&
+      (search === '' || e.title.toLowerCase().includes(search) || e.college.toLowerCase().includes(search) || e.tags.some(t => t.toLowerCase().includes(search)))
+    );
+
+    document.getElementById('results-count').textContent = `${filtered.length} event${filtered.length !== 1 ? 's' : ''} found`;
+
+    const grid = document.getElementById('events-grid');
+    if (filtered.length === 0) {
+      grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="emoji">🔭</div><p>No events match your search.</p></div>`;
+      return;
+    }
+
+    grid.innerHTML = filtered.map(e => {
+      const color = CAT_COLORS[e.category] || '#00d4aa';
+      const daysLeft = Math.ceil((new Date(e.deadline) - new Date()) / (1000*60*60*24));
+      const deadlineBadge = daysLeft > 0 && daysLeft <= 10
+        ? `<span class="card-deadline">${daysLeft}d left</span>` : '';
+      const tags = e.tags.slice(0,3).map(t => `<span class="card-tag">${t}</span>`).join('');
+      const dateStr = new Date(e.date).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+
+      return `
+        <div class="event-card" onclick="openModal(${e.id})" style="--hover-color:${color}; background: ${CAT_BG[e.category] || '#0f1117'};"
+          onmouseenter="this.style.borderColor='${color}'" onmouseleave="this.style.borderColor='#1e2130'">
+          <div class="card-img">
+            <img src="${e.image}" alt="${e.title}" loading="lazy" />
+            <span class="card-cat" style="background:${color}">${e.category}</span>
+            ${deadlineBadge}
+          </div>
+          <div class="card-body">
+            <div class="card-title">${e.title}</div>
+            <div class="card-meta">🏛 ${e.college}</div>
+            <div class="card-meta">📍 ${e.city} · 📅 ${dateStr}</div>
+            <div class="card-tags">${tags}</div>
+            <div class="card-footer">
+              <button onclick="event.stopPropagation(); openModal(${e.id})" style="background:${color};color:#000;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:0.3px;">Apply Now →</button>
+              <span class="card-reg">${e.registered} registered</span>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // --- MODAL ---
+  function openModal(id) {
+    const e = events.find(ev => ev.id === id);
+    if (!e) return;
+    const color = CAT_COLORS[e.category] || '#00d4aa';
+
+    document.getElementById('m-img').src = e.image;
+    document.getElementById('m-img').alt = e.title;
+    document.getElementById('m-cat').textContent = e.category;
+    document.getElementById('m-cat').style.background = color;
+    document.getElementById('m-title').textContent = e.title;
+    document.getElementById('m-college').textContent = '🏛 ' + e.college;
+    document.getElementById('m-city').textContent = '📍 ' + e.city;
+    document.getElementById('m-desc').textContent = e.description;
+    document.getElementById('m-date').textContent = new Date(e.date).toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    document.getElementById('m-deadline').textContent = new Date(e.deadline).toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric' });
+    document.getElementById('m-team').textContent = e.teamSize + ' members';
+    document.getElementById('m-prize').textContent = e.prize;
+    document.getElementById('m-tags').innerHTML = e.tags.map(t =>
+      `<span class="modal-tag" style="background:#1a1f2e;color:${color};border:1px solid ${color}44">${t}</span>`
+    ).join('');
+    document.getElementById('m-reg-btn').style.background = color;
+    document.getElementById('m-reg-btn').style.color = '#000';
+    document.getElementById('m-reg-btn').style.boxShadow = '0 4px 20px ' + color + '55';
+    document.getElementById('m-reg-btn').onclick = function() { openRegForm(e.id); };
+    document.getElementById('m-view-regs-btn').onclick = function() {
+      if (!isAdminLoggedIn) {
+        openAdminLogin();
+      } else {
+        closeModal();
+        openRegsModal(e.id);
+      }
+    };
+    document.getElementById('event-modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    document.getElementById('event-modal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  // --- POST FORM ---
+  function openPostForm() {
+    document.getElementById('post-form-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closePostForm() {
+    document.getElementById('post-form-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function submitEvent() {
+    const title = document.getElementById('f-title').value.trim();
+    const college = document.getElementById('f-college').value.trim();
+    if (!title || !college) { alert('Please fill in at least Event Title and College Name.'); return; }
+
+    const newEvent = {
+      id: Date.now(),
+      title,
+      college,
+      city: document.getElementById('f-city').value,
+      category: document.getElementById('f-category').value,
+      date: document.getElementById('f-date').value || new Date().toISOString().split('T')[0],
+      deadline: document.getElementById('f-deadline').value || new Date().toISOString().split('T')[0],
+      description: document.getElementById('f-desc').value || 'No description provided.',
+      prize: document.getElementById('f-prize').value || 'TBD',
+      teamSize: document.getElementById('f-team').value || '1-5',
+      tags: document.getElementById('f-tags').value.split(',').map(t => t.trim()).filter(Boolean),
+      image: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=600&q=80',
+      registered: 0
+    };
+
+    events.unshift(newEvent);
+    closePostForm();
+    switchTab('browse');
+    renderEvents();
+
+    // clear form
+    ['f-title','f-college','f-date','f-deadline','f-prize','f-team','f-tags','f-desc'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+  }
+
+  // --- REGISTRATION FORM ---
+  let currentRegEventId = null;
+
+  function openRegForm(eventId) {
+    currentRegEventId = eventId;
+    const e = events.find(ev => ev.id === eventId);
+    if (!e) return;
+    const color = CAT_COLORS[e.category] || '#00d4aa';
+
+    document.getElementById('reg-event-name').textContent = '📌 ' + e.title + ' · ' + e.college;
+    document.getElementById('reg-submit-btn').style.background = color;
+
+    // Reset form
+    document.getElementById('reg-form-content').style.display = 'block';
+    document.getElementById('reg-success').style.display = 'none';
+    ['r-name','r-email','r-phone','r-college','r-dept','r-team'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('r-year').value = '';
+
+    document.getElementById('reg-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeRegForm() {
+    document.getElementById('reg-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function submitRegistration() {
+    const name = document.getElementById('r-name').value.trim();
+    const email = document.getElementById('r-email').value.trim();
+    const phone = document.getElementById('r-phone').value.trim();
+    const college = document.getElementById('r-college').value.trim();
+    const year = document.getElementById('r-year').value;
+
+    if (!name || !email || !phone || !college || !year) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      alert('Please enter a valid email address.');
+      return;
+    }
+    if (!/^[0-9]{10}$/.test(phone)) {
+      alert('Please enter a valid 10-digit phone number.');
+      return;
+    }
+
+    // Update registered count
+    const e = events.find(ev => ev.id === currentRegEventId);
+    if (e) e.registered++;
+    renderEvents();
+
+    // Show success
+    document.getElementById('reg-form-content').style.display = 'none';
+    document.getElementById('success-title').textContent = 'You\'re Registered, ' + name.split(' ')[0] + '! 🎉';
+    document.getElementById('success-msg').textContent =
+      'A confirmation has been sent to ' + email + '. See you at ' + (e ? e.title : 'the event') + '!';
+    document.getElementById('reg-success').style.display = 'block';
+  }
+
+  // keyboard close
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeModal(); closePostForm(); closeRegForm(); closeEditModal(); closeRegsModal(); }
+  });
+
+  // INIT
+  renderEvents();
+
+  // ===================== ADMIN =====================
+  const ADMIN_CREDENTIALS = { username: 'admin', password: 'kerala2026' };
+  let isAdminLoggedIn = false;
+  let editingEventId = null;
+  // Mock registrations store: { eventId: [{name, email, phone, college, dept, year, team}] }
+  const registrationsDB = {};
+
+  // Seed some mock registrations for demo
+  function seedMockRegistrations() {
+    events.slice(0,8).forEach(e => {
+      registrationsDB[e.id] = [];
+      const mockNames = [
+        ['Arjun Krishnan','arjun@gmail.com','9876543210','CET','CSE','3rd Year','CodeCrew'],
+        ['Priya Nair','priya@gmail.com','9845123456','MEC','ECE','2nd Year',''],
+        ['Rahul Menon','rahul@gmail.com','9812345678','NIT Calicut','CS','4th Year','ByteForce'],
+        ['Anjali Das','anjali@gmail.com','9867890123','CUSAT','IT','1st Year',''],
+        ['Vishnu Pillai','vishnu@gmail.com','9890123456','Rajagiri','CSE','3rd Year','PixelMinds'],
+      ];
+      const count = Math.floor(Math.random()*4)+1;
+      for(let i=0;i<count;i++) {
+        const m = mockNames[i % mockNames.length];
+        registrationsDB[e.id].push({ name:m[0], email:m[1], phone:m[2], college:m[3], dept:m[4], year:m[5], team:m[6] });
+      }
+    });
+  }
+  seedMockRegistrations();
+
+  // Intercept real registration submissions to store them
+  const _origSubmit = submitRegistration;
+  submitRegistration = function() {
+    const name = document.getElementById('r-name').value.trim();
+    const email = document.getElementById('r-email').value.trim();
+    const phone = document.getElementById('r-phone').value.trim();
+    const college = document.getElementById('r-college').value.trim();
+    const year = document.getElementById('r-year').value;
+    const dept = document.getElementById('r-dept').value.trim();
+    const team = document.getElementById('r-team').value.trim();
+    if (!name || !email || !phone || !college || !year) { alert('Please fill in all required fields.'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alert('Please enter a valid email address.'); return; }
+    if (!/^[0-9]{10}$/.test(phone)) { alert('Please enter a valid 10-digit phone number.'); return; }
+    const e = events.find(ev => ev.id === currentRegEventId);
+    if (e) {
+      e.registered++;
+      if (!registrationsDB[e.id]) registrationsDB[e.id] = [];
+      registrationsDB[e.id].push({ name, email, phone, college, dept, year, team });
+    }
+    renderEvents();
+    document.getElementById('reg-form-content').style.display = 'none';
+    document.getElementById('success-title').textContent = "You\'re Registered, " + name.split(' ')[0] + '! 🎉';
+    document.getElementById('success-msg').textContent = 'A confirmation has been sent to ' + email + '. See you at ' + (e ? e.title : 'the event') + '!';
+    document.getElementById('reg-success').style.display = 'block';
+  };
+
+  function openAdminLogin() {
+    if (isAdminLoggedIn) { showAdminDashboard(); return; }
+    document.getElementById('admin-login-overlay').classList.add('open');
+    document.getElementById('admin-error').style.display = 'none';
+    document.getElementById('admin-username').value = '';
+    document.getElementById('admin-password').value = '';
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => document.getElementById('admin-username').focus(), 100);
+  }
+
+  function closeAdminLogin() {
+    document.getElementById('admin-login-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function doAdminLogin() {
+    const user = document.getElementById('admin-username').value.trim();
+    const pass = document.getElementById('admin-password').value;
+    if (user === ADMIN_CREDENTIALS.username && pass === ADMIN_CREDENTIALS.password) {
+      isAdminLoggedIn = true;
+      closeAdminLogin();
+      showAdminDashboard();
+    } else {
+      document.getElementById('admin-error').style.display = 'block';
+      document.getElementById('admin-password').value = '';
+    }
+  }
+
+  function showAdminDashboard() {
+    document.getElementById('browse-tab').classList.add('hidden');
+    document.getElementById('post-tab').style.display = 'none';
+    document.getElementById('admin-dashboard').style.display = 'block';
+    const visibleCount = events.filter(e => !e.hidden).length;
+    document.getElementById('admin-welcome').textContent = 'Welcome back, Admin · ' + visibleCount + ' visible / ' + events.length + ' total events';
+    document.body.style.overflow = '';
+
+    // Stats
+    const cats = {};
+    let totalReg = 0;
+    events.filter(e=>!e.hidden).forEach(e => { cats[e.category] = (cats[e.category]||0)+1; totalReg += e.registered; });
+    const cities = new Set(events.map(e=>e.city)).size;
+    document.getElementById('admin-stats-grid').innerHTML =
+      `<div class="admin-stat"><div class="a-num" style="color:#00d4aa">${events.filter(e=>!e.hidden).length}</div><div class="a-lbl">Visible Events</div></div>` +
+      `<div class="admin-stat"><div class="a-num" style="color:#6b7280">${events.filter(e=>e.hidden).length}</div><div class="a-lbl">Hidden Events</div></div>` +
+      `<div class="admin-stat"><div class="a-num" style="color:#a855f7">${totalReg.toLocaleString()}</div><div class="a-lbl">Registrations</div></div>` +
+      `<div class="admin-stat"><div class="a-num" style="color:#f97316">${cities}</div><div class="a-lbl">Districts</div></div>` +
+      `<div class="admin-stat"><div class="a-num" style="color:#ec4899">${Object.keys(cats).length}</div><div class="a-lbl">Categories</div></div>`;
+
+    renderAdminTable('');
+  }
+
+  function closeAdminDashboard() {
+    document.getElementById('admin-dashboard').style.display = 'none';
+  }
+
+  function renderAdminTable(query) {
+    const q = (query||'').toLowerCase();
+    const filtered = events.filter(e =>
+      e.title.toLowerCase().includes(q) ||
+      e.college.toLowerCase().includes(q) ||
+      e.city.toLowerCase().includes(q) ||
+      e.category.toLowerCase().includes(q)
+    );
+    const tbody = document.getElementById('admin-table-body');
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="9" class="empty-table">No events found.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = filtered.map((e, i) => {
+      const color = CAT_COLORS[e.category] || '#00d4aa';
+      const dateStr = new Date(e.date).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+      const regsCount = (registrationsDB[e.id]||[]).length;
+      const isHidden = !!e.hidden;
+      return `<tr class="${isHidden ? 'hidden-row' : ''}">
+        <td style="color:#4a5568">${i+1}</td>
+        <td style="color:#fff;font-weight:600">${e.title}</td>
+        <td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.college}</td>
+        <td>📍 ${e.city}</td>
+        <td><span class="admin-cat-badge" style="background:${color}">${e.category}</span></td>
+        <td>${dateStr}</td>
+        <td style="color:${color};font-weight:700">${e.registered} <span style="color:#4a5568;font-size:11px">(${regsCount} stored)</span></td>
+        <td>
+          <button class="admin-toggle-btn ${isHidden ? 'hidden-evt' : 'visible'}" onclick="toggleEventVisibility(${e.id})">
+            ${isHidden ? '🚫 Hidden' : '✅ Visible'}
+          </button>
+        </td>
+        <td>
+          <div class="admin-action-btns">
+            <button class="admin-edit-btn" onclick="openEditModal(${e.id})">✏️ Edit</button>
+            <button class="admin-view-btn" onclick="openRegsModal(${e.id})">👥 Regs</button>
+            <button class="admin-delete-btn" onclick="adminDeleteEvent(${e.id})">🗑</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  function toggleEventVisibility(id) {
+    const e = events.find(ev => ev.id === id);
+    if (!e) return;
+    e.hidden = !e.hidden;
+    renderEvents();
+    renderAdminTable(document.querySelector('.admin-search')?.value || '');
+    showAdminDashboard();
+  }
+
+  function adminDeleteEvent(id) {
+    const e = events.find(ev => ev.id === id);
+    if (!e) return;
+    if (!confirm('Delete "' + e.title + '"? This cannot be undone.')) return;
+    events = events.filter(ev => ev.id !== id);
+    delete registrationsDB[id];
+    showAdminDashboard();
+    renderEvents();
+  }
+
+  // ── EDIT EVENT ──
+  function openEditModal(id) {
+    const e = events.find(ev => ev.id === id);
+    if (!e) return;
+    editingEventId = id;
+    document.getElementById('e-title').value = e.title;
+    document.getElementById('e-college').value = e.college;
+    document.getElementById('e-category').value = e.category;
+    document.getElementById('e-city').value = e.city;
+    document.getElementById('e-date').value = e.date;
+    document.getElementById('e-deadline').value = e.deadline;
+    document.getElementById('e-prize').value = e.prize;
+    document.getElementById('e-teamSize').value = e.teamSize;
+    document.getElementById('e-tags').value = e.tags.join(', ');
+    document.getElementById('e-description').value = e.description;
+    const color = CAT_COLORS[e.category] || '#6366f1';
+    document.getElementById('e-save-btn').style.background = color;
+    document.getElementById('edit-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeEditModal() {
+    document.getElementById('edit-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+    editingEventId = null;
+  }
+
+  function saveEditedEvent() {
+    const e = events.find(ev => ev.id === editingEventId);
+    if (!e) return;
+    e.title       = document.getElementById('e-title').value.trim() || e.title;
+    e.college     = document.getElementById('e-college').value.trim() || e.college;
+    e.category    = document.getElementById('e-category').value;
+    e.city        = document.getElementById('e-city').value;
+    e.date        = document.getElementById('e-date').value || e.date;
+    e.deadline    = document.getElementById('e-deadline').value || e.deadline;
+    e.prize       = document.getElementById('e-prize').value.trim() || e.prize;
+    e.teamSize    = document.getElementById('e-teamSize').value.trim() || e.teamSize;
+    e.tags        = document.getElementById('e-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
+    e.description = document.getElementById('e-description').value.trim() || e.description;
+    closeEditModal();
+    renderEvents();
+    showAdminDashboard();
+  }
+
+  // ── VIEW REGISTRATIONS ──
+  function openRegsModal(id) {
+    const e = events.find(ev => ev.id === id);
+    if (!e) return;
+    const regs = registrationsDB[id] || [];
+    document.getElementById('regs-title').textContent = '👥 ' + e.title;
+    document.getElementById('regs-subtitle').textContent = e.college + ' · ' + regs.length + ' registration' + (regs.length!==1?'s':'');
+    if (regs.length === 0) {
+      document.getElementById('regs-list').innerHTML = '<div class="no-regs">🎫 No registrations yet for this event.</div>';
+    } else {
+      document.getElementById('regs-list').innerHTML = regs.map((r, i) => `
+        <div class="reg-entry">
+          <div>
+            <div class="rname">${i+1}. ${r.name} ${r.team ? '<span style="color:#7c8db5;font-weight:400;font-size:12px">· Team: '+r.team+'</span>' : ''}</div>
+            <div class="rdetail">📧 ${r.email} · 📱 ${r.phone}</div>
+            <div class="rdetail">🏛 ${r.college} · ${r.dept} · ${r.year}</div>
+          </div>
+        </div>`).join('');
+    }
+    document.getElementById('regs-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeRegsModal() {
+    document.getElementById('regs-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  // ── EXPORT CSV ──
+  function downloadCSV() {
+    const rows = [['#','Title','College','City','Category','Date','Prize','Team Size','Registered','Hidden']];
+    events.forEach((e,i) => {
+      rows.push([
+        i+1, e.title, e.college, e.city, e.category,
+        e.date, e.prize, e.teamSize, e.registered, e.hidden ? 'Yes' : 'No'
+      ]);
+    });
+    const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url;
+    a.download = 'keralacollegeevents_' + new Date().toISOString().split('T')[0] + '.csv';
+    a.click(); URL.revokeObjectURL(url);
+  }
+
+  function adminLogout() {
+    isAdminLoggedIn = false;
+    closeAdminDashboard();
+    switchTab('browse');
+  }
+</script>
+
+<!-- ADMIN LOGIN MODAL -->
+<div class="admin-login-overlay" id="admin-login-overlay" onclick="closeAdminLogin()">
+  <div class="admin-login-box" onclick="event.stopPropagation()">
+    <div class="admin-logo">
+      <div class="shield">🛡️</div>
+      <h2>Admin Login</h2>
+      <p>KeralaCollegeEvents.in — Admin Panel</p>
+    </div>
+    <div id="admin-error" class="admin-error">⚠️ Invalid username or password.</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input class="form-input" id="admin-username" type="text" placeholder="Enter admin username" autocomplete="off" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" id="admin-password" type="password" placeholder="Enter password"
+          onkeydown="if(event.key==='Enter') doAdminLogin()" />
+      </div>
+      <button class="post-btn" onclick="doAdminLogin()" style="background:#00d4aa;color:#000;">Login to Dashboard →</button>
+      <button onclick="closeAdminLogin()" style="background:transparent;border:none;color:#4a5568;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:-8px;">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN DASHBOARD -->
+<div id="admin-dashboard">
+  <div class="admin-topbar">
+    <div>
+      <h1>🛡️ Admin Dashboard</h1>
+      <span id="admin-welcome"></span>
+    </div>
+    <div class="admin-topbar-btns">
+      <button class="add-event-btn" onclick="switchTab('browse'); closeAdminDashboard(); openPostForm();">+ Add New Event</button>
+      <button class="csv-btn" onclick="downloadCSV()">⬇ Export CSV</button>
+      <button class="logout-btn" onclick="adminLogout()">Logout</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="admin-stats" id="admin-stats-grid"></div>
+
+  <!-- Events Table -->
+  <div class="admin-table-wrap">
+    <div class="admin-table-header">
+      <h3>All Events</h3>
+      <input class="admin-search" type="text" placeholder="🔍 Search events..." oninput="renderAdminTable(this.value)" />
+    </div>
+    <div style="overflow-x:auto;">
+      <table id="admin-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Event Title</th>
+            <th>College</th>
+            <th>City</th>
+            <th>Category</th>
+            <th>Date</th>
+            <th>Registered</th>
+            <th>Visible</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="admin-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+<!-- EDIT EVENT MODAL -->
+<div class="edit-overlay" id="edit-overlay" onclick="closeEditModal()">
+  <div class="edit-form" onclick="event.stopPropagation()">
+    <div class="form-header">
+      <h2>✏️ Edit Event</h2>
+      <button class="close-btn" onclick="closeEditModal()">×</button>
+    </div>
+    <div class="form-grid" id="edit-form-grid">
+      <div class="form-group"><label class="form-label">Event Title</label><input class="form-input" id="e-title" type="text" /></div>
+      <div class="form-group"><label class="form-label">College Name</label><input class="form-input" id="e-college" type="text" /></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Category</label>
+          <select class="form-input" id="e-category">
+            <option>Hackathon</option><option>Tech Fest</option><option>Coding</option>
+            <option>Design</option><option>Entrepreneurship</option><option>Arts Fest</option>
+            <option>Robotics Battle</option><option>Cultural Fest</option><option>Game Dev</option>
+            <option>Sports Fest</option><option>Dept Fest</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">City</label>
+          <select class="form-input" id="e-city">
+            <option>Thiruvananthapuram</option><option>Kollam</option><option>Pathanamthitta</option>
+            <option>Alappuzha</option><option>Kottayam</option><option>Idukki</option>
+            <option>Ernakulam</option><option>Thrissur</option><option>Palakkad</option>
+            <option>Malappuram</option><option>Kozhikode</option><option>Wayanad</option>
+            <option>Kannur</option><option>Kasaragod</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Event Date</label><input class="form-input" id="e-date" type="date" /></div>
+        <div class="form-group"><label class="form-label">Registration Deadline</label><input class="form-input" id="e-deadline" type="date" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Prize Pool</label><input class="form-input" id="e-prize" type="text" /></div>
+        <div class="form-group"><label class="form-label">Team Size</label><input class="form-input" id="e-teamSize" type="text" /></div>
+      </div>
+      <div class="form-group"><label class="form-label">Tags (comma separated)</label><input class="form-input" id="e-tags" type="text" /></div>
+      <div class="form-group"><label class="form-label">Description</label><textarea class="form-input" id="e-description" rows="4"></textarea></div>
+      <button class="post-btn" id="e-save-btn" onclick="saveEditedEvent()" style="background:#6366f1;color:#fff;">Save Changes ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- REGISTRATIONS MODAL -->
+<div class="regs-overlay" id="regs-overlay" onclick="closeRegsModal()">
+  <div class="regs-box" onclick="event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+      <h2 id="regs-title">Registrations</h2>
+      <button class="close-btn" onclick="closeRegsModal()">×</button>
+    </div>
+    <p class="regs-subtitle" id="regs-subtitle"></p>
+    <div id="regs-list"></div>
+  </div>
+</div>
+
+</body>
+</html>
