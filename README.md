@@ -2,27 +2,27 @@
   <img src="./img.png" alt="Project Banner" width="100%">
 </p>
 
-# [Project Name] 🎯
+# [college events] 🎯
 
 ## Basic Details
 
-### Team Name: [Name]
+### Team Name: [tinkus]
 
 ### Team Members
-- Member 1: [Name] - [College]
-- Member 2: [Name] - [College]
+- Member 1: [Aysha danah] - [College of engineering munnar]
+- Member 2: [Anuhitha AS] - [College of engineering munnar]
 
 ### Hosted Project Link
-[mention your project hosted link here]
+[https://ayshadanah12.github.io/collageEvents/]
 
 ### Project Description
-[2-3 lines about what your project does]
+[our project helps students find out events in each colleges and attend it]
 
 ### The Problem statement
-[What problem are you solving?]
+[most students don't know about every projects happening in every college.]
 
 ### The Solution
-[How are you solving it?]
+[we created a website that helps students know about the various events happening across the colleges.]
 
 ---
 
@@ -31,10 +31,10 @@
 ### Technologies/Components Used
 
 **For Software:**
-- Languages used: [e.g., JavaScript, Python, Java]
-- Frameworks used: [e.g., React, Django, Spring Boot]
-- Libraries used: [e.g., axios, pandas, JUnit]
-- Tools used: [e.g., VS Code, Git, Docker]
+- Languages used: [Html,css,js]
+- Frameworks used: nill
+- Libraries used: 
+- Tools used: [vscode,github,claude,] 
 
 **For Hardware:**
 - Main components: [List main components]
