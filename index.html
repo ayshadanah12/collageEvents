@@ -5,6 +5,113 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>KeralaCollegeEvents.in</title>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- ═══════════════════════════════════════════════════════
+       FIREBASE SETUP — Replace the config below with YOUR
+       Firebase project credentials from:
+       Firebase Console → Project Settings → Your apps → SDK setup
+  ═══════════════════════════════════════════════════════ -->
+  <!-- Firebase Realtime Database SDK (using your existing RTDB) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+  <script>
+    // ── Firebase Config → Realtime Database ──────────────────
+    const firebaseConfig = {
+      apiKey:            "AIzaSyDxUcM1-GQyvAnUaOkcEXkDc74kVNJt-J0",
+      authDomain:        "collageevents-d2632.firebaseapp.com",
+      databaseURL:       "https://collageevents-d2632-default-rtdb.firebaseio.com",
+      projectId:         "collageevents-d2632",
+      storageBucket:     "collageevents-d2632.firebasestorage.app",
+      messagingSenderId: "82428506158",
+      appId:             "1:82428506158:web:9e482375fba00e81e36fbf",
+      measurementId:     "G-MJEZDNQDRR"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // ── Listen for events in real-time ───────────────────────
+    db.ref("events").on("value", (snapshot) => {
+      const data = snapshot.val() || {};
+      // Convert object of objects → array, newest first
+      const firebaseEvents = Object.entries(data)
+        .map(([key, val]) => ({
+          ...val,
+          id: key,
+          _firebaseDoc: true,
+          tags: Array.isArray(val.tags) ? val.tags :
+                (typeof val.tags === 'string' ? val.tags.split(',').map(t=>t.trim()).filter(Boolean) : [])
+        }))
+        .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+      window.__firebaseEvents = firebaseEvents;
+
+      // Update status badge
+      const badge = document.getElementById('fb-status');
+      if (badge) {
+        badge.textContent = '🟢 Firebase Live';
+        badge.style.color = '#00d4aa';
+        badge.style.borderColor = '#00d4aa44';
+      }
+      if (typeof window.mergeAndRender === 'function') window.mergeAndRender();
+
+    }, (err) => {
+      console.warn("Firebase RTDB error:", err.message);
+      const badge = document.getElementById('fb-status');
+      if (badge) {
+        badge.textContent = '🔴 Firebase Offline';
+        badge.style.color = '#f87171';
+        badge.style.borderColor = '#f8717144';
+        badge.title = err.message;
+      }
+      if (typeof window.mergeAndRender === 'function') window.mergeAndRender();
+    });
+
+    // ── Add a new event ──────────────────────────────────────
+    window.firebaseAddEvent = async function(eventData) {
+      const ref = db.ref("events").push();
+      await ref.set({
+        ...eventData,
+        tags: Array.isArray(eventData.tags) ? eventData.tags : [],
+        registered: 0,
+        hidden: false,
+        createdAt: Date.now()
+      });
+      return ref.key;
+    };
+
+    // ── Update an event ──────────────────────────────────────
+    window.firebaseUpdateEvent = async function(firebaseId, data) {
+      await db.ref("events/" + firebaseId).update(data);
+    };
+
+    // ── Delete an event ──────────────────────────────────────
+    window.firebaseDeleteEvent = async function(firebaseId) {
+      await db.ref("events/" + firebaseId).remove();
+    };
+
+    // ── Add a registration under events/{id}/registrations ──
+    window.firebaseAddRegistration = async function(eventId, regData) {
+      const eventIdStr = String(eventId);
+      // Push registration
+      await db.ref("events/" + eventIdStr + "/registrations").push({
+        ...regData,
+        registeredAt: Date.now()
+      });
+      // Increment registered count (only for RTDB-backed events)
+      try {
+        await db.ref("events/" + eventIdStr + "/registered").transaction(count => (count || 0) + 1);
+      } catch(e) { /* seed events — ignore */ }
+    };
+
+    // ── Fetch registrations for an event ────────────────────
+    window.firebaseGetRegistrations = async function(eventId) {
+      const eventIdStr = String(eventId);
+      const snap = await db.ref("events/" + eventIdStr + "/registrations").once("value");
+      const data = snap.val() || {};
+      return Object.values(data);
+    };
+  </script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: #080a0f; font-family: 'DM Sans', sans-serif; color: #fff; min-height: 100vh; }
@@ -116,26 +223,83 @@
 
     /* MODAL OVERLAY */
     .overlay {
-      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85);
-      z-index: 200; align-items: center; justify-content: center; padding: 20px;
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+      z-index: 200; align-items: center; justify-content: center; padding: 16px;
+      backdrop-filter: blur(6px);
     }
     .overlay.open { display: flex; }
     .modal {
-      background: #0f1117; border: 1px solid #1e2130; border-radius: 20px;
-      max-width: 620px; width: 100%; overflow: hidden; max-height: 90vh; overflow-y: auto;
+      background: #0a0c14; border: 1px solid #1e2130; border-radius: 24px;
+      max-width: 700px; width: 100%; overflow: hidden;
+      max-height: 92vh; overflow-y: auto;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.7);
+      animation: modalIn 0.25s cubic-bezier(0.34,1.56,0.64,1);
     }
-    .modal-img { width: 100%; height: 220px; object-fit: cover; filter: brightness(0.75); display: block; }
-    .modal-body { padding: 28px; }
-    .modal-cat { font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 20px; color: #000; display: inline-block; margin-bottom: 14px; }
-    .modal-title { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; margin-bottom: 8px; }
-    .modal-meta { color: #7c8db5; margin-bottom: 4px; }
-    .modal-desc { color: #c0ccdb; line-height: 1.7; margin: 16px 0 24px; }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.94) translateY(20px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    /* Hero image with gradient overlay */
+    .modal-hero { position: relative; height: 260px; overflow: hidden; flex-shrink: 0; }
+    .modal-hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .modal-hero-gradient {
+      position: absolute; inset: 0;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(10,12,20,0.95) 100%);
+    }
+    .modal-hero-close {
+      position: absolute; top: 16px; right: 16px;
+      background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.15);
+      color: #fff; font-size: 20px; width: 38px; height: 38px;
+      border-radius: 50%; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; backdrop-filter: blur(4px); transition: all 0.2s;
+      line-height: 1;
+    }
+    .modal-hero-close:hover { background: rgba(255,255,255,0.15); }
+    .modal-hero-badges {
+      position: absolute; bottom: 16px; left: 20px; display: flex; gap: 8px; align-items: center;
+    }
+    .modal-hero-cat {
+      font-size: 12px; font-weight: 700; padding: 5px 14px; border-radius: 20px;
+      color: #000; letter-spacing: 0.5px;
+    }
+    .modal-hero-deadline {
+      background: #ff3d3d; color: #fff; font-size: 12px; font-weight: 700;
+      padding: 5px 12px; border-radius: 20px;
+    }
+    /* Body */
+    .modal-body { padding: 24px 28px 32px; }
+    .modal-title { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; margin-bottom: 10px; line-height: 1.15; letter-spacing: -0.5px; }
+    .modal-college-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+    .modal-college-name { color: #c0ccdb; font-size: 14px; font-weight: 600; }
+    .modal-city-row { color: #7c8db5; font-size: 13px; margin-bottom: 20px; }
+    /* Stats grid */
     .modal-stats {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;
     }
-    .stat-box { background: #1a1f2e; border-radius: 12px; padding: 14px; }
-    .stat-label { color: #4a5568; font-size: 12px; margin-bottom: 4px; }
-    .stat-val { color: #fff; font-weight: 600; font-size: 14px; }
+    .stat-box {
+      background: #111520; border: 1px solid #1e2130; border-radius: 14px;
+      padding: 14px 16px; transition: border-color 0.2s;
+    }
+    .stat-box:hover { border-color: #2a3050; }
+    .stat-label { color: #4a5568; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 5px; }
+    .stat-val { color: #fff; font-weight: 700; font-size: 15px; }
+    /* Description */
+    .modal-desc-heading { color: #7c8db5; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px; }
+    .modal-desc { color: #c0ccdb; line-height: 1.75; font-size: 14px; margin-bottom: 22px; }
+    /* Tags */
+    .modal-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+    .modal-tag { font-size: 12px; padding: 5px 12px; border-radius: 8px; font-weight: 500; }
+    /* Divider */
+    .modal-divider { height: 1px; background: #1e2130; margin: 0 0 24px; }
+    /* Action buttons */
+    .modal-actions { display: flex; flex-direction: column; gap: 10px; }
+    .register-btn {
+      width: 100%; border: none; border-radius: 14px; padding: 16px;
+      font-size: 16px; font-weight: 800; cursor: pointer; font-family: 'Syne', sans-serif;
+      letter-spacing: 0.5px; transition: opacity 0.2s, transform 0.1s;
+    }
+    .register-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+    .register-btn:active { transform: translateY(0); }
     .modal-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
     .modal-tag { font-size: 12px; padding: 5px 12px; border-radius: 8px; }
     .register-btn {
@@ -186,6 +350,34 @@
     }
     .form-input:focus { border-color: #00d4aa; }
     textarea.form-input { resize: vertical; }
+
+    /* Image upload area */
+    .img-upload-area {
+      border: 2px dashed #2a3050; border-radius: 12px; padding: 24px 16px;
+      text-align: center; cursor: pointer; transition: all 0.2s; background: #1a1f2e;
+      position: relative;
+    }
+    .img-upload-area:hover, .img-upload-area.dragover { border-color: #00d4aa; background: rgba(0,212,170,0.05); }
+    .img-upload-area input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .img-upload-icon { font-size: 32px; margin-bottom: 8px; }
+    .img-upload-label { color: #7c8db5; font-size: 13px; }
+    .img-upload-label span { color: #00d4aa; font-weight: 600; }
+    .img-preview-wrap { display: none; position: relative; border-radius: 10px; overflow: hidden; }
+    .img-preview-wrap img { width: 100%; height: 160px; object-fit: cover; display: block; border-radius: 10px; }
+    .img-preview-remove {
+      position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.7);
+      border: none; color: #fff; border-radius: 50%; width: 28px; height: 28px;
+      font-size: 16px; cursor: pointer; line-height: 28px; text-align: center;
+    }
+    .img-upload-progress {
+      display: none; margin-top: 10px; background: #1a1f2e;
+      border-radius: 8px; overflow: hidden; height: 6px;
+    }
+    .img-upload-progress-bar {
+      height: 100%; width: 0%; background: linear-gradient(90deg, #00d4aa, #6c63ff);
+      transition: width 0.3s; border-radius: 8px;
+    }
+    .img-upload-status { font-size: 12px; color: #7c8db5; margin-top: 6px; text-align: center; min-height: 16px; }
     .post-btn {
       width: 100%; background: #00d4aa; color: #000; border: none; border-radius: 12px;
       padding: 14px; font-size: 16px; font-weight: 800; cursor: pointer;
@@ -298,6 +490,8 @@
       <button class="nav-btn active" id="btn-browse" onclick="switchTab('browse')">Browse Events</button>
       <button class="nav-btn" id="btn-post" onclick="switchTab('post')">For Colleges</button>
       <button class="nav-btn" id="btn-admin" onclick="openAdminLogin()" style="border-color:#00d4aa22;color:#00d4aa;">🔐 Admin</button>
+      <span id="fb-status" title="Firebase connection status" style="font-size:11px;padding:5px 10px;border-radius:20px;background:#1a1f2e;color:#4a5568;border:1px solid #2a3050;white-space:nowrap;">⚙️ Firebase</span>
+      <span id="sheets-status" title="Google Sheets → bit.ly/kcesheets (1f4PFC...)" style="font-size:11px;padding:5px 10px;border-radius:20px;background:#1a1f2e;color:#4a5568;border:1px solid #2a3050;white-space:nowrap;">📊 Sheets</span>
     </nav>
   </div>
 </header>
@@ -371,29 +565,71 @@
 </main>
 
 <!-- EVENT DETAIL MODAL -->
-<div class="overlay" id="event-modal" onclick="closeModal()">
+<div class="overlay" id="event-modal" onclick="if(event.target===this)closeModal()">
   <div class="modal" onclick="event.stopPropagation()">
-    <img class="modal-img" id="m-img" src="" alt="" />
-    <div class="modal-body">
-      <span class="modal-cat" id="m-cat"></span>
-      <h2 class="modal-title" id="m-title"></h2>
-      <p class="modal-meta" id="m-college"></p>
-      <p class="modal-meta" id="m-city"></p>
-      <p class="modal-desc" id="m-desc"></p>
-      <div class="modal-stats">
-        <div class="stat-box"><div class="stat-label">📅 Event Date</div><div class="stat-val" id="m-date"></div></div>
-        <div class="stat-box"><div class="stat-label">⏰ Deadline</div><div class="stat-val" id="m-deadline"></div></div>
-        <div class="stat-box"><div class="stat-label">👥 Team Size</div><div class="stat-val" id="m-team"></div></div>
-        <div class="stat-box"><div class="stat-label">🏆 Prize Pool</div><div class="stat-val" id="m-prize"></div></div>
+
+    <!-- Hero Image -->
+    <div class="modal-hero">
+      <img id="m-img" src="" alt="" />
+      <div class="modal-hero-gradient"></div>
+      <button class="modal-hero-close" onclick="closeModal()">×</button>
+      <div class="modal-hero-badges">
+        <span class="modal-hero-cat" id="m-cat"></span>
+        <span class="modal-hero-deadline" id="m-deadline-badge" style="display:none"></span>
       </div>
-      <div class="modal-tags" id="m-tags"></div>
-      <button class="register-btn" id="m-reg-btn">Register Now →</button>
-      <button id="m-view-regs-btn" style="width:100%;margin-top:10px;background:transparent;border:1px solid #2a3050;border-radius:12px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;color:#7c8db5;transition:all 0.2s;"
-        onmouseover="this.style.borderColor='#00d4aa';this.style.color='#00d4aa'"
-        onmouseout="this.style.borderColor='#2a3050';this.style.color='#7c8db5'">
-        👥 View Registrations
-      </button>
     </div>
+
+    <!-- Body -->
+    <div class="modal-body">
+      <h2 class="modal-title" id="m-title"></h2>
+
+      <div class="modal-college-row">
+        <span style="font-size:18px">🏛</span>
+        <span class="modal-college-name" id="m-college"></span>
+      </div>
+      <div class="modal-city-row" id="m-city"></div>
+
+      <!-- Stats -->
+      <div class="modal-stats">
+        <div class="stat-box">
+          <div class="stat-label">📅 Event Date</div>
+          <div class="stat-val" id="m-date"></div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">⏰ Registration Deadline</div>
+          <div class="stat-val" id="m-deadline"></div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">👥 Team Size</div>
+          <div class="stat-val" id="m-team"></div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">🏆 Prize Pool</div>
+          <div class="stat-val" id="m-prize"></div>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="modal-desc-heading">About this Event</div>
+      <p class="modal-desc" id="m-desc"></p>
+
+      <!-- Tags -->
+      <div class="modal-tags" id="m-tags"></div>
+
+      <div class="modal-divider"></div>
+
+      <!-- Actions -->
+      <div class="modal-actions">
+        <button class="register-btn" id="m-reg-btn">Apply Now →</button>
+        <button id="m-view-regs-btn"
+          style="width:100%;background:transparent;border:1px solid #1e2130;border-radius:14px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;color:#4a5568;transition:all 0.2s;"
+          onmouseover="this.style.borderColor='#2a3050';this.style.color='#7c8db5'"
+          onmouseout="this.style.borderColor='#1e2130';this.style.color='#4a5568'">
+          👥 View Registrations (Admin)
+        </button>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -478,7 +714,52 @@
         <label class="form-label">Description</label>
         <textarea class="form-input" id="f-desc" rows="4" placeholder="Describe your event..."></textarea>
       </div>
-      <button class="post-btn" onclick="submitEvent()">Publish Event →</button>
+
+      <div class="form-group">
+        <label class="form-label">Registration Link <span style="color:#4a5568;font-weight:400;text-transform:none">(where students apply)</span></label>
+        <div style="position:relative;">
+          <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none;">🔗</span>
+          <input class="form-input" id="f-reglink" type="url"
+            placeholder="https://forms.google.com/... or your registration URL"
+            style="padding-left:38px;" />
+        </div>
+        <p style="color:#4a5568;font-size:11px;margin-top:5px;">Students will be redirected here when they click "Apply Now". Leave blank to use the built-in form.</p>
+      </div>
+
+      <!-- IMAGE UPLOAD -->
+      <div class="form-group">
+        <label class="form-label" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Event Poster / Banner <span style="color:#4a5568;font-weight:400;text-transform:none">(optional)</span></span>
+          <button type="button" onclick="openCloudinarySettings()" id="cld-settings-btn"
+            style="background:transparent;border:1px solid #2a3050;border-radius:6px;padding:3px 10px;font-size:11px;color:#7c8db5;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;">
+            ⚙️ Setup Cloudinary
+          </button>
+        </label>
+        <div id="cld-status-bar" style="display:none;font-size:11px;padding:6px 10px;border-radius:6px;margin-bottom:6px;"></div>
+        <!-- Preview (shown after image selected) -->
+        <div class="img-preview-wrap" id="f-img-preview-wrap">
+          <img id="f-img-preview" src="" alt="Preview" />
+          <button class="img-preview-remove" onclick="removeImage()" title="Remove image">×</button>
+        </div>
+        <!-- Upload drop zone (hidden after image selected) -->
+        <div class="img-upload-area" id="f-img-upload-area"
+             ondragover="event.preventDefault();this.classList.add('dragover')"
+             ondragleave="this.classList.remove('dragover')"
+             ondrop="handleImageDrop(event)">
+          <input type="file" id="f-img-file" accept="image/*" onchange="handleImageSelect(event)" />
+          <div class="img-upload-icon">🖼️</div>
+          <div class="img-upload-label">
+            <span>Click to upload</span> or drag & drop<br>
+            JPG, PNG, WEBP up to 10MB
+          </div>
+        </div>
+        <div class="img-upload-progress" id="f-img-progress">
+          <div class="img-upload-progress-bar" id="f-img-progress-bar"></div>
+        </div>
+        <div class="img-upload-status" id="f-img-status"></div>
+      </div>
+
+      <button class="post-btn" id="f-submit-btn" onclick="submitEvent()">Publish Event →</button>
     </div>
   </div>
 </div>
@@ -542,6 +823,77 @@
 </div>
 
 <script>
+  // ═══════════════════════════════════════════════════════════
+  // GOOGLE SHEETS INTEGRATION
+  // Target Sheet: https://docs.google.com/spreadsheets/d/
+  //               1f4PFCMolWwS3y0wHA90ykGUimVkElTl61JJxpXywoDs
+  //
+  // Step 1: Go to https://script.google.com → New project
+  // Step 2: Paste GoogleAppsScript_Code.gs → Save
+  // Step 3: Deploy → New deployment → Web app → Anyone → Deploy
+  // Step 4: Copy the Web App URL and paste it below
+  // ═══════════════════════════════════════════════════════════
+  const SHEETS_WEBHOOK_URL = "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
+  // ↑ Replace with your deployed Apps Script URL
+  // It will look like: https://script.google.com/macros/s/ABC.../exec
+
+  async function sendToGoogleSheets(type, data) {
+    if (!SHEETS_WEBHOOK_URL || SHEETS_WEBHOOK_URL.includes("YOUR_APPS_SCRIPT")) {
+      console.warn("Google Sheets not configured — skipping sheet write.");
+      return { ok: false, reason: "not_configured" };
+    }
+    try {
+      const payload = JSON.stringify({ type, data, timestamp: new Date().toISOString() });
+      // Apps Script requires no-cors for cross-origin POST
+      await fetch(SHEETS_WEBHOOK_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain" },
+        body: payload
+      });
+      updateSheetsStatus("connected");
+      return { ok: true };
+    } catch (err) {
+      console.error("Google Sheets write failed:", err);
+      updateSheetsStatus("error");
+      return { ok: false, reason: err.message };
+    }
+  }
+
+  function updateSheetsStatus(state) {
+    const badge = document.getElementById("sheets-status");
+    if (!badge) return;
+    if (state === "connected") {
+      badge.textContent = "📊 Sheets ✓";
+      badge.style.color = "#4ade80";
+      badge.style.borderColor = "#4ade8044";
+    } else if (state === "error") {
+      badge.textContent = "📊 Sheets ✗";
+      badge.style.color = "#f87171";
+      badge.style.borderColor = "#f8717144";
+    }
+  }
+
+  // ── Firebase state ──────────────────────────────────────
+  window.__firebaseEvents = [];  // populated by the module script above
+
+  // Merge Firebase events with local seed events, then re-render
+  window.mergeAndRender = function() {
+    const fbEvents = (window.__firebaseEvents || []).map(e => ({
+      ...e,
+      tags: Array.isArray(e.tags) ? e.tags : (e.tags||'').split(',').map(t=>t.trim()).filter(Boolean)
+    }));
+    // Remove any FB events that are also in local seed (by title match to avoid duplicates)
+    // (seed events have numeric ids, firebase events have string doc ids)
+    events = [...fbEvents]; // Only Firebase events — no seed data
+    renderEvents();
+    if (isAdminLoggedIn) {
+      renderAdminTable(document.querySelector('.admin-search')?.value || '');
+      showAdminDashboard();
+    }
+  };
+  // ────────────────────────────────────────────────────────
+
   const CAT_COLORS = {
     "Hackathon":       "#22c55e",   // green
     "Tech Fest":       "#f97316",   // orange
@@ -572,129 +924,18 @@
 
   const CATEGORIES = ["All", "Hackathon", "Tech Fest", "Coding", "Design", "Entrepreneurship", "Arts Fest", "Robotics Battle", "Cultural Fest", "Game Dev", "Sports Fest", "Dept Fest"];
 
-  let events = [
-    // THIRUVANANTHAPURAM
-    { id:1, title:"TechFest 2025", college:"College of Engineering Trivandrum", city:"Thiruvananthapuram", category:"Tech Fest", date:"2026-03-15", deadline:"2026-03-10", description:"Kerala's biggest annual tech festival featuring robotics, coding, IoT workshops, and cultural nights.", image:"https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80", tags:["Robotics","AI","IoT","Coding"], teamSize:"1-4", prize:"₹1,00,000", registered:342 },
-    { id:101, title:"CyberSec Summit", college:"Indian Institute of Space Science and Technology", city:"Thiruvananthapuram", category:"Hackathon", date:"2026-06-10", deadline:"2026-06-05", description:"National-level cybersecurity hackathon hosted by IIST focusing on space data security and satellite communication vulnerabilities.", image:"https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=600&q=80", tags:["Cybersecurity","Space Tech","Networking"], teamSize:"2-4", prize:"₹80,000", registered:175 },
-    { id:102, title:"DevSprint TVM", college:"Mar Baselios College of Engineering and Technology", city:"Thiruvananthapuram", category:"Coding", date:"2026-07-05", deadline:"2026-06-28", description:"Intensive 24-hour development sprint for building full-stack web and mobile applications.", image:"https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=600&q=80", tags:["Full Stack","Web","Mobile"], teamSize:"1-3", prize:"₹30,000", registered:140 },
-    { id:103, title:"InnoTech Expo", college:"Mohandas College of Engineering and Technology", city:"Thiruvananthapuram", category:"Tech Fest", date:"2026-07-20", deadline:"2026-07-15", description:"Project exposition and tech fest open to all engineering students across Kerala.", image:"https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&q=80", tags:["Project Expo","Innovation","STEM"], teamSize:"1-5", prize:"₹40,000", registered:98 },
+  // events array — populated exclusively from Firebase Realtime Database
+  let events = [];
 
-    // KOLLAM
-    { id:2, title:"Startup Pitch Fest", college:"TKM College of Engineering", city:"Kollam", category:"Entrepreneurship", date:"2026-04-20", deadline:"2026-04-15", description:"Pitch your startup idea to investors and mentors from Kerala's top accelerators.", image:"https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=600&q=80", tags:["Startup","Business","Innovation"], teamSize:"1-5", prize:"₹2,00,000 + Funding", registered:67 },
-    { id:201, title:"Technolympics", college:"TKM Institute of Technology", city:"Kollam", category:"Tech Fest", date:"2026-05-25", deadline:"2026-05-20", description:"Multi-event tech fest with robotics, hackathon, quiz, and paper presentation competitions.", image:"https://images.unsplash.com/photo-1531482615713-2afd69097998?w=600&q=80", tags:["Robotics","Quiz","Paper Presentation"], teamSize:"1-4", prize:"₹55,000", registered:210 },
-    { id:202, title:"KodeWar Kollam", college:"Baselios Mathews II College of Engineering", city:"Kollam", category:"Coding", date:"2026-06-07", deadline:"2026-06-01", description:"Competitive coding contest with multi-round elimination and real-time leaderboards.", image:"https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&q=80", tags:["DSA","Competitive Programming","Python"], teamSize:"1-2", prize:"₹20,000", registered:130 },
-
-    // PATHANAMTHITTA
-    { id:301, title:"AEC HackNight", college:"AEC College of Engineering Aranmula", city:"Pathanamthitta", category:"Hackathon", date:"2026-05-30", deadline:"2026-05-25", description:"Overnight hackathon at AEC, focusing on agritech, rural healthcare, and education innovation.", image:"https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=600&q=80", tags:["AgriTech","Healthcare","EdTech"], teamSize:"2-4", prize:"₹45,000", registered:88 },
-    { id:302, title:"Mount Zion TechArena", college:"Mount Zion College of Engineering", city:"Pathanamthitta", category:"Tech Fest", date:"2026-06-20", deadline:"2026-06-14", description:"Annual tech fest at Mount Zion featuring hardware design, coding contests, and paper presentations.", image:"https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&q=80", tags:["Hardware","Coding","Research"], teamSize:"1-5", prize:"₹35,000", registered:76 },
-
-    // ALAPPUZHA
-    { id:401, title:"Sree Buddha HackFest", college:"Sree Buddha College of Engineering", city:"Alappuzha", category:"Hackathon", date:"2026-05-17", deadline:"2026-05-12", description:"Hackathon addressing smart water management and coastal community challenges unique to Alappuzha.", image:"https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&q=80", tags:["Water Tech","Coastal","Smart City"], teamSize:"2-5", prize:"₹50,000", registered:95 },
-    { id:402, title:"CEC CodeFest", college:"College of Engineering Cherthala", city:"Alappuzha", category:"Coding", date:"2026-06-28", deadline:"2026-06-22", description:"Coding competition open to all Kerala students with problems across beginner, intermediate, and expert levels.", image:"https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&q=80", tags:["C++","Java","Python"], teamSize:"1-2", prize:"₹22,000", registered:115 },
-
-    // KOTTAYAM
-    { id:501, title:"Amal Jyothi TechX", college:"Amal Jyothi College of Engineering", city:"Kottayam", category:"Tech Fest", date:"2026-04-26", deadline:"2026-04-20", description:"Premier tech fest of central Kerala, featuring AI workshops, hackathon, robo-wars, and cultural events.", image:"https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80", tags:["AI","Robotics","Workshop"], teamSize:"1-5", prize:"₹90,000", registered:320 },
-    { id:502, title:"Saintgits Innovate", college:"Saintgits College of Engineering", city:"Kottayam", category:"Entrepreneurship", date:"2026-05-10", deadline:"2026-05-04", description:"Startup showcase and entrepreneurship summit with mentors from Kerala's startup ecosystem.", image:"https://images.unsplash.com/photo-1552664730-d307ca884978?w=600&q=80", tags:["Startup","Mentorship","Pitch"], teamSize:"1-4", prize:"₹60,000", registered:82 },
-    { id:503, title:"IIIT Kottayam AlgoFest", college:"Indian Institute of Information Technology Kottayam", city:"Kottayam", category:"Coding", date:"2026-06-05", deadline:"2026-05-30", description:"National-level competitive programming event hosted by IIIT Kottayam with participation from across India.", image:"https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&q=80", tags:["Algorithms","Graphs","DP"], teamSize:"1-2", prize:"₹1,00,000", registered:450 },
-
-    // IDUKKI
-    { id:601, title:"GEC Idukki HackFest", college:"Government Engineering College Idukki", city:"Idukki", category:"Hackathon", date:"2026-05-10", deadline:"2026-05-05", description:"Annual hackathon by GEC Idukki inviting students to build tech solutions for hill district challenges — connectivity, agriculture, and eco-tourism.", image:"https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&q=80", tags:["Rural Tech","Agriculture","IoT"], teamSize:"2-4", prize:"₹60,000", registered:112 },
-    { id:602, title:"TechVista 2025", college:"Mar Baselios Christian College of Engineering and Technology", city:"Idukki", category:"Tech Fest", date:"2026-05-18", deadline:"2026-05-12", description:"Multi-day tech fest featuring paper presentations, project expos, coding contests, and robotics events.", image:"https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&q=80", tags:["Robotics","Paper Presentation","Project Expo"], teamSize:"1-5", prize:"₹45,000", registered:88 },
-    { id:603, title:"CodeSprint Thodupuzha", college:"University College of Engineering Thodupuzha", city:"Idukki", category:"Coding", date:"2026-06-01", deadline:"2026-05-26", description:"Fast-paced competitive coding event testing algorithmic thinking and problem solving under time pressure.", image:"https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=600&q=80", tags:["Competitive Programming","Python","Java"], teamSize:"1-2", prize:"₹25,000", registered:74 },
-    { id:604, title:"InnovatED Startup Challenge", college:"Al Azhar College of Engineering and Technology", city:"Idukki", category:"Entrepreneurship", date:"2026-06-14", deadline:"2026-06-08", description:"Startup ideation challenge encouraging students to pitch innovative solutions for Kerala's highland communities.", image:"https://images.unsplash.com/photo-1552664730-d307ca884978?w=600&q=80", tags:["Startup","Innovation","Pitching"], teamSize:"1-4", prize:"₹35,000", registered:53 },
-    { id:605, title:"MunnarHack 2025", college:"College of Engineering Munnar", city:"Idukki", category:"Hackathon", date:"2026-06-21", deadline:"2026-06-15", description:"Hackathon set in the scenic highlands of Munnar, challenging students to build tech solutions for eco-tourism, tea industry automation, and sustainable hill living.", image:"https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=600&q=80", tags:["Eco-Tech","Sustainability","IoT"], teamSize:"2-4", prize:"₹50,000", registered:38 },
-
-    // ERNAKULAM
-    { id:701, title:"HackKochi 2025", college:"Model Engineering College", city:"Ernakulam", category:"Hackathon", date:"2026-03-22", deadline:"2026-03-18", description:"36-hour hackathon focused on solving real-world problems in healthcare, agriculture, and fintech.", image:"https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=600&q=80", tags:["Healthcare","FinTech","Agriculture"], teamSize:"2-5", prize:"₹75,000", registered:218 },
-    { id:702, title:"Ignite'25 Design Sprint", college:"Rajagiri School of Engineering", city:"Ernakulam", category:"Design", date:"2026-04-05", deadline:"2026-04-01", description:"UI/UX design competition challenging students to reimagine public service apps for Kerala.", image:"https://images.unsplash.com/photo-1561070791-2526d30994b5?w=600&q=80", tags:["UI/UX","Figma","Prototyping"], teamSize:"1-3", prize:"₹30,000", registered:95 },
-    { id:703, title:"CUSAT TechWeek", college:"Cochin University of Science and Technology", city:"Ernakulam", category:"Tech Fest", date:"2026-05-08", deadline:"2026-05-02", description:"Week-long tech extravaganza at CUSAT with workshops, paper presentations, project expo, and hackathon.", image:"https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80", tags:["Research","AI","Data Science"], teamSize:"1-5", prize:"₹1,50,000", registered:580 },
-    { id:704, title:"FISAT CodeJam", college:"Federal Institute of Science and Technology", city:"Ernakulam", category:"Coding", date:"2026-05-24", deadline:"2026-05-18", description:"Online and onsite coding rounds testing logic, problem solving, and speed coding.", image:"https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&q=80", tags:["Algorithms","Web Dev","Python"], teamSize:"1-3", prize:"₹35,000", registered:195 },
-    { id:705, title:"MACE Design Jam", college:"MA College of Engineering", city:"Ernakulam", category:"Design", date:"2026-06-12", deadline:"2026-06-06", description:"48-hour product design sprint focused on designing solutions for everyday Kerala problems.", image:"https://images.unsplash.com/photo-1561070791-2526d30994b5?w=600&q=80", tags:["Product Design","UI/UX","Prototyping"], teamSize:"1-3", prize:"₹28,000", registered:72 },
-
-    // THRISSUR
-    { id:801, title:"CodeStorm Hackathon", college:"Government Engineering College Thrissur", city:"Thrissur", category:"Hackathon", date:"2026-04-12", deadline:"2026-04-08", description:"Competitive programming and system design hackathon open to all Kerala colleges.", image:"https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&q=80", tags:["DSA","System Design","Backend"], teamSize:"2-4", prize:"₹50,000", registered:180 },
-    { id:802, title:"Vidya Tech Carnival", college:"Vidya Academy of Science and Technology", city:"Thrissur", category:"Tech Fest", date:"2026-05-03", deadline:"2026-04-27", description:"Annual tech carnival featuring robo race, circuit design, app development, and science quiz.", image:"https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&q=80", tags:["Robotics","Electronics","Quiz"], teamSize:"1-4", prize:"₹60,000", registered:245 },
-    { id:803, title:"Jyothi HackFest", college:"Jyothi Engineering College", city:"Thrissur", category:"Hackathon", date:"2026-06-14", deadline:"2026-06-08", description:"Theme-based hackathon focused on sustainable tech and green energy solutions.", image:"https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=600&q=80", tags:["Green Tech","Sustainability","IoT"], teamSize:"2-4", prize:"₹42,000", registered:110 },
-
-    // PALAKKAD
-    { id:901, title:"AlgoArena Championship", college:"NSS College of Engineering Palakkad", city:"Palakkad", category:"Coding", date:"2026-05-03", deadline:"2026-04-28", description:"Competitive programming contest with algorithmic challenges ranging from beginner to expert level.", image:"https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&q=80", tags:["Algorithms","Competitive Programming","C++","Python"], teamSize:"1-2", prize:"₹40,000", registered:250 },
-    { id:902, title:"IIT Palakkad TechSummit", college:"IIT Palakkad", city:"Palakkad", category:"Tech Fest", date:"2026-04-18", deadline:"2026-04-12", description:"Annual technical summit at IIT Palakkad with research talks, workshops, and inter-college competitions.", image:"https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80", tags:["Research","AI/ML","Robotics"], teamSize:"1-5", prize:"₹2,00,000", registered:680 },
-    { id:903, title:"Ahalia Innothon", college:"Ahalia School of Engineering and Technology", city:"Palakkad", category:"Hackathon", date:"2026-06-21", deadline:"2026-06-15", description:"Innovation hackathon with tracks in healthcare, agriculture, and smart transportation.", image:"https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&q=80", tags:["Healthcare","AgriTech","Transport"], teamSize:"2-4", prize:"₹38,000", registered:92 },
-
-    // MALAPPURAM
-    { id:1001, title:"MES TechFusion", college:"MES College of Engineering", city:"Malappuram", category:"Tech Fest", date:"2026-04-25", deadline:"2026-04-19", description:"Inter-college tech fest with competitions in coding, hardware design, AI, and drone racing.", image:"https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&q=80", tags:["Drone Racing","AI","Hardware"], teamSize:"1-4", prize:"₹70,000", registered:290 },
-    { id:1002, title:"MEA HackBuild", college:"MEA Engineering College", city:"Malappuram", category:"Hackathon", date:"2026-05-16", deadline:"2026-05-10", description:"Build-a-thon event where teams design and prototype functional IoT devices within 24 hours.", image:"https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=600&q=80", tags:["IoT","Prototyping","Embedded"], teamSize:"2-5", prize:"₹55,000", registered:140 },
-    { id:1003, title:"CALICUT UNIV CodeChamp", college:"Calicut University Institute of Engineering and Technology", city:"Malappuram", category:"Coding", date:"2026-06-07", deadline:"2026-06-01", description:"University-level coding championship for students across all Calicut University affiliated colleges.", image:"https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&q=80", tags:["Competitive Programming","Algorithms","JS"], teamSize:"1-2", prize:"₹30,000", registered:320 },
-
-    // KOZHIKODE
-    { id:1101, title:"NIT Calicut Hackathon", college:"NIT Calicut", city:"Kozhikode", category:"Hackathon", date:"2026-04-04", deadline:"2026-03-28", description:"Flagship hackathon at NIT Calicut open to national participants with tracks in AI, blockchain, and fintech.", image:"https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&q=80", tags:["AI","Blockchain","FinTech"], teamSize:"2-4", prize:"₹3,00,000", registered:750 },
-    { id:1102, title:"KMCT DesignFest", college:"KMCT College of Engineering", city:"Kozhikode", category:"Design", date:"2026-05-22", deadline:"2026-05-16", description:"UI/UX and graphic design competitions encouraging students to create impactful visual tech solutions.", image:"https://images.unsplash.com/photo-1561070791-2526d30994b5?w=600&q=80", tags:["UI/UX","Graphic Design","Branding"], teamSize:"1-3", prize:"₹32,000", registered:105 },
-    { id:1103, title:"AWH TechNova", college:"AWH Engineering College", city:"Kozhikode", category:"Tech Fest", date:"2026-06-06", deadline:"2026-05-30", description:"Annual tech fest at AWH covering robotics, coding, paper presentations, and project showcases.", image:"https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80", tags:["Robotics","Project Expo","Coding"], teamSize:"1-5", prize:"₹50,000", registered:185 },
-
-    // WAYANAD
-    { id:1201, title:"GKMCE HillHack", college:"Government College of Engineering Mananthavady", city:"Wayanad", category:"Hackathon", date:"2026-05-31", deadline:"2026-05-25", description:"Hackathon tackling issues unique to Wayanad — tribal welfare, forest conservation, and eco-agriculture.", image:"https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=600&q=80", tags:["Tribal Tech","Forest","Eco-Agri"], teamSize:"2-4", prize:"₹40,000", registered:65 },
-    { id:1202, title:"WayanadTech Expo", college:"Government Polytechnic College Mananthavady", city:"Wayanad", category:"Tech Fest", date:"2026-07-12", deadline:"2026-07-06", description:"Regional tech expo showcasing student projects focused on hill community development and tribal innovation.", image:"https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&q=80", tags:["Community Tech","Tribal Innovation","Sustainability"], teamSize:"1-5", prize:"₹25,000", registered:48 },
-
-    // KANNUR
-    { id:1301, title:"GCE Kannur CodeFest", college:"Government College of Engineering Kannur", city:"Kannur", category:"Coding", date:"2026-05-09", deadline:"2026-05-03", description:"Coding fest featuring competitive programming, web hackathon, and open-source contribution sprint.", image:"https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&q=80", tags:["Open Source","Web","Competitive"], teamSize:"1-3", prize:"₹45,000", registered:165 },
-    { id:1302, title:"Thalassery TechRise", college:"College of Engineering Thalassery", city:"Kannur", category:"Tech Fest", date:"2026-06-13", deadline:"2026-06-07", description:"Multi-event tech fest with hardware, software, and management events catering to all engineering disciplines.", image:"https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80", tags:["Hardware","Management","Software"], teamSize:"1-4", prize:"₹48,000", registered:130 },
-    { id:1303, title:"SNG Payyanur Hackathon", college:"Sree Narayana Guru College of Engineering Payyanur", city:"Kannur", category:"Hackathon", date:"2026-07-05", deadline:"2026-06-28", description:"Social impact hackathon focused on fishermen welfare, coastal safety, and marine technology.", image:"https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&q=80", tags:["Marine Tech","Social Impact","Coastal"], teamSize:"2-4", prize:"₹36,000", registered:79 },
-
-    // KASARAGOD
-    { id:1401, title:"LBS Kasaragod CodeWar", college:"LBS College of Engineering Kasaragod", city:"Kasaragod", category:"Coding", date:"2026-05-23", deadline:"2026-05-17", description:"Competitive coding event open to all Kerala colleges with live leaderboard and team elimination rounds.", image:"https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&q=80", tags:["Algorithms","Problem Solving","C++"], teamSize:"1-2", prize:"₹28,000", registered:145 },
-    { id:1402, title:"St. Gregorios InnoFest", college:"St. Gregorios College of Engineering", city:"Kasaragod", category:"Tech Fest", date:"2026-06-28", deadline:"2026-06-22", description:"Annual innovation fest featuring project expo, paper presentations, app development, and quiz.", image:"https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&q=80", tags:["Project Expo","Innovation","App Dev"], teamSize:"1-5", prize:"₹32,000", registered:88 },
-
-    // ARTS FEST
-    { id:1501, title:"Kalolsavam 2026", college:"College of Engineering Trivandrum", city:"Thiruvananthapuram", category:"Arts Fest", date:"2026-03-20", deadline:"2026-03-14", description:"Grand inter-collegiate arts festival celebrating classical dance, music, drama, painting, and literary events.", image:"https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&q=80", tags:["Dance","Music","Drama","Painting"], teamSize:"1-10", prize:"₹80,000", registered:420 },
-    { id:1502, title:"Sargam Music Fest", college:"Model Engineering College", city:"Ernakulam", category:"Arts Fest", date:"2026-04-11", deadline:"2026-04-05", description:"All-Kerala inter-collegiate music competition featuring classical, folk, fusion, and western music categories.", image:"https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&q=80", tags:["Classical Music","Folk","Western","Fusion"], teamSize:"1-6", prize:"₹60,000", registered:310 },
-    { id:1503, title:"Rang De — Arts Festival", college:"NIT Calicut", city:"Kozhikode", category:"Arts Fest", date:"2026-04-25", deadline:"2026-04-19", description:"Vibrant arts festival at NIT Calicut featuring street plays, stand-up comedy, fine arts, and photography contests.", image:"https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=600&q=80", tags:["Street Play","Photography","Fine Arts","Comedy"], teamSize:"1-8", prize:"₹75,000", registered:520 },
-    { id:1504, title:"Natya Utsav", college:"Government College of Engineering Thrissur", city:"Thrissur", category:"Arts Fest", date:"2026-05-09", deadline:"2026-05-03", description:"Inter-collegiate dance festival showcasing Bharatanatyam, Mohiniyattam, Kathak, and contemporary dance forms.", image:"https://images.unsplash.com/photo-1518834107812-67b0b7c58434?w=600&q=80", tags:["Bharatanatyam","Mohiniyattam","Contemporary Dance"], teamSize:"1-12", prize:"₹55,000", registered:280 },
-    { id:1505, title:"Chitrakala 2026", college:"Amal Jyothi College of Engineering", city:"Kottayam", category:"Arts Fest", date:"2026-05-17", deadline:"2026-05-11", description:"Fine arts and creative expression festival with events in sketching, digital art, poster making, and sculpture.", image:"https://images.unsplash.com/photo-1536924940846-227afb31e2a5?w=600&q=80", tags:["Sketching","Digital Art","Sculpture","Poster Making"], teamSize:"1-3", prize:"₹40,000", registered:195 },
-    { id:1506, title:"MunnarArts Highland Fest", college:"College of Engineering Munnar", city:"Idukki", category:"Arts Fest", date:"2026-06-06", deadline:"2026-05-31", description:"Unique arts fest set in the misty highlands of Munnar celebrating tribal art, nature photography, folk music, and eco-inspired paintings.", image:"https://images.unsplash.com/photo-1499781350541-7783f6c6a0c8?w=600&q=80", tags:["Tribal Art","Folk Music","Nature Photography","Eco Art"], teamSize:"1-6", prize:"₹35,000", registered:145 },
-    { id:1507, title:"LBS Kasaragod Kala Mela", college:"LBS College of Engineering Kasaragod", city:"Kasaragod", category:"Arts Fest", date:"2026-06-27", deadline:"2026-06-21", description:"Cultural extravaganza featuring Yakshagana, Theyyam performances, classical music, and inter-college drama competitions.", image:"https://images.unsplash.com/photo-1571266752177-92d2a29f1c15?w=600&q=80", tags:["Yakshagana","Theyyam","Classical","Drama"], teamSize:"1-15", prize:"₹50,000", registered:230 },
-
-    // ROBOTICS BATTLE
-    { id:1601, title:"RoboWar Kerala 2026", college:"College of Engineering Trivandrum", city:"Thiruvananthapuram", category:"Robotics Battle", date:"2026-03-28", deadline:"2026-03-22", description:"Kerala's premier combat robotics championship where teams build and battle custom-designed robots in an arena. Categories include Sumo, Line Follower, and Full Combat.", image:"https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&q=80", tags:["Combat Robots","Sumo Bot","Line Follower"], teamSize:"2-5", prize:"₹1,20,000", registered:185 },
-    { id:1602, title:"BotBrawl Kochi", college:"Model Engineering College", city:"Ernakulam", category:"Robotics Battle", date:"2026-04-18", deadline:"2026-04-12", description:"High-octane robot battle event at MEC featuring weight categories, obstacle courses, and autonomous bot challenges.", image:"https://images.unsplash.com/photo-1531482615713-2afd69097998?w=600&q=80", tags:["Autonomous Bots","Obstacle Course","Battle Arena"], teamSize:"2-4", prize:"₹90,000", registered:210 },
-    { id:1603, title:"NIT Robo Rumble", college:"NIT Calicut", city:"Kozhikode", category:"Robotics Battle", date:"2026-05-02", deadline:"2026-04-26", description:"National-level robotics battle at NIT Calicut with tracks in RC combat, drone racing, and autonomous navigation.", image:"https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=80", tags:["Drone Racing","RC Combat","Autonomous Navigation"], teamSize:"2-5", prize:"₹2,00,000", registered:340 },
-    { id:1604, title:"IIT Palakkad RoboClash", college:"IIT Palakkad", city:"Palakkad", category:"Robotics Battle", date:"2026-05-16", deadline:"2026-05-10", description:"Flagship robotics battle at IIT Palakkad featuring full-combat robots, micro-mouse maze solving, and robo-soccer.", image:"https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&q=80", tags:["Full Combat","Micro Mouse","Robo Soccer"], teamSize:"2-5", prize:"₹1,50,000", registered:290 },
-    { id:1605, title:"MunnarMech Battle", college:"College of Engineering Munnar", city:"Idukki", category:"Robotics Battle", date:"2026-06-13", deadline:"2026-06-07", description:"Robotics battle competition in the hills of Munnar featuring terrain-challenge bots, sumo wrestling robots, and remote-controlled combat.", image:"https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=80", tags:["Terrain Bots","Sumo","RC Combat"], teamSize:"2-4", prize:"₹55,000", registered:98 },
-    { id:1606, title:"Thrissur BotFight Championship", college:"Vidya Academy of Science and Technology", city:"Thrissur", category:"Robotics Battle", date:"2026-07-04", deadline:"2026-06-28", description:"Inter-college robot fighting championship with elimination rounds, live commentary, and crowd-voted best design award.", image:"https://images.unsplash.com/photo-1531482615713-2afd69097998?w=600&q=80", tags:["Elimination Rounds","Bot Design","Combat"], teamSize:"2-5", prize:"₹70,000", registered:155 },
-    { id:1607, title:"GEC Kannur RoboArena", college:"Government College of Engineering Kannur", city:"Kannur", category:"Robotics Battle", date:"2026-07-19", deadline:"2026-07-13", description:"Robotics arena event featuring line follower races, wall-follower bots, and head-to-head combat rounds.", image:"https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&q=80", tags:["Line Follower","Wall Follower","Combat"], teamSize:"2-4", prize:"₹45,000", registered:120 },
-
-    // CULTURAL FEST
-    { id:1701, title:"Tarang 2026", college:"NIT Calicut", city:"Kozhikode", category:"Cultural Fest", date:"2026-03-21", deadline:"2026-03-15", description:"NIT Calicut's iconic cultural extravaganza with celebrity performances, band night, fashion show, stand-up comedy, and inter-college cultural competitions.", image:"https://images.unsplash.com/photo-1506157786151-b8491531f063?w=600&q=80", tags:["Band Night","Fashion Show","Stand-up","Dance"], teamSize:"1-15", prize:"₹1,50,000", registered:850 },
-    { id:1702, title:"Wavelength Fest", college:"Model Engineering College", city:"Ernakulam", category:"Cultural Fest", date:"2026-04-10", deadline:"2026-04-04", description:"MEC's annual cultural festival featuring music battles, solo singing, group dance, mime, street play, and film screening.", image:"https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?w=600&q=80", tags:["Music Battle","Group Dance","Mime","Film Screening"], teamSize:"1-12", prize:"₹90,000", registered:630 },
-    { id:1703, title:"Darpan Cultural Nite", college:"Government Engineering College Thrissur", city:"Thrissur", category:"Cultural Fest", date:"2026-05-08", deadline:"2026-05-02", description:"Inter-collegiate cultural night showcasing folk art, fusion music, spoken word poetry, and theatrical performances.", image:"https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&q=80", tags:["Folk Art","Fusion Music","Poetry","Theatre"], teamSize:"1-10", prize:"₹65,000", registered:420 },
-    { id:1704, title:"Unnati Cultural Fest", college:"College of Engineering Trivandrum", city:"Thiruvananthapuram", category:"Cultural Fest", date:"2026-05-22", deadline:"2026-05-16", description:"CET's flagship cultural festival with celebrity artist performances, nukkad natak, western music, and quiz nights.", image:"https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=600&q=80", tags:["Nukkad Natak","Western Music","Quiz","Celebrity Night"], teamSize:"1-15", prize:"₹1,00,000", registered:720 },
-    { id:1705, title:"Sangamam 2026", college:"Amal Jyothi College of Engineering", city:"Kottayam", category:"Cultural Fest", date:"2026-06-06", deadline:"2026-05-31", description:"Vibrant cultural fest with classical and western events, DJ night, face painting, and street food carnival.", image:"https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&q=80", tags:["DJ Night","Classical","Western","Street Food"], teamSize:"1-10", prize:"₹70,000", registered:510 },
-    { id:1706, title:"Pahadi Cultural Night", college:"College of Engineering Munnar", city:"Idukki", category:"Cultural Fest", date:"2026-06-20", deadline:"2026-06-14", description:"Unique highland cultural evening celebrating Kerala's diverse tribal heritage through dance, music, storytelling, and local cuisine.", image:"https://images.unsplash.com/photo-1560439514-4e9645039924?w=600&q=80", tags:["Tribal Heritage","Storytelling","Folk Dance","Local Cuisine"], teamSize:"1-8", prize:"₹40,000", registered:195 },
-
-    // GAME DEV
-    { id:1801, title:"GameJam Kerala 2026", college:"CUSAT", city:"Ernakulam", category:"Game Dev", date:"2026-04-03", deadline:"2026-03-28", description:"48-hour game development jam where teams design, build, and present a playable game from scratch. Tracks for 2D, 3D, and mobile games.", image:"https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&q=80", tags:["Unity","Unreal","Mobile","2D/3D"], teamSize:"1-4", prize:"₹80,000", registered:230 },
-    { id:1802, title:"PixelForge Challenge", college:"Rajagiri School of Engineering", city:"Ernakulam", category:"Game Dev", date:"2026-05-02", deadline:"2026-04-26", description:"Game design competition focusing on indie game development using Unity or Godot — judged on gameplay, storytelling, and innovation.", image:"https://images.unsplash.com/photo-1511512578047-dfb367046420?w=600&q=80", tags:["Unity","Godot","Indie Game","Storytelling"], teamSize:"1-3", prize:"₹55,000", registered:165 },
-    { id:1803, title:"NIT GameDevThon", college:"NIT Calicut", city:"Kozhikode", category:"Game Dev", date:"2026-05-23", deadline:"2026-05-17", description:"National-level game development hackathon with categories in AR/VR games, puzzle games, and educational games.", image:"https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=600&q=80", tags:["AR/VR","Puzzle","Educational Games","Unity"], teamSize:"2-4", prize:"₹1,20,000", registered:310 },
-    { id:1804, title:"IIT Palakkad GameBuild", college:"IIT Palakkad", city:"Palakkad", category:"Game Dev", date:"2026-06-13", deadline:"2026-06-07", description:"Game development sprint focused on simulation and strategy games, with mentorship from indie game developers.", image:"https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&q=80", tags:["Simulation","Strategy","Mentorship","C#"], teamSize:"1-4", prize:"₹90,000", registered:185 },
-    { id:1805, title:"MunnarGame Jam", college:"College of Engineering Munnar", city:"Idukki", category:"Game Dev", date:"2026-07-04", deadline:"2026-06-28", description:"Weekend game jam in Munnar's scenic setting — build a nature or environment-themed game within 36 hours.", image:"https://images.unsplash.com/photo-1511512578047-dfb367046420?w=600&q=80", tags:["Nature Theme","36-Hour Jam","Indie","Environment"], teamSize:"1-3", prize:"₹35,000", registered:88 },
-    { id:1806, title:"TKM GameForge", college:"TKM College of Engineering", city:"Kollam", category:"Game Dev", date:"2026-07-18", deadline:"2026-07-12", description:"Game development contest open to all Kerala college students with tracks for beginners and advanced developers.", image:"https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=600&q=80", tags:["Beginner Friendly","Advanced","Game Design","Pygame"], teamSize:"1-3", prize:"₹42,000", registered:140 },
-
-    // SPORTS FEST
-    { id:1901, title:"Sportsmania 2026", college:"NIT Calicut", city:"Kozhikode", category:"Sports Fest", date:"2026-03-27", deadline:"2026-03-21", description:"NIT Calicut's mega sports festival with inter-college competitions in cricket, football, basketball, badminton, chess, and athletics.", image:"https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=600&q=80", tags:["Cricket","Football","Basketball","Athletics"], teamSize:"1-15", prize:"₹2,00,000", registered:950 },
-    { id:1902, title:"CUSAT SportsFest", college:"CUSAT", city:"Ernakulam", category:"Sports Fest", date:"2026-04-17", deadline:"2026-04-11", description:"All-Kerala inter-collegiate sports meet covering team sports, individual athletics, aquatics, and indoor games.", image:"https://images.unsplash.com/photo-1568515045052-f9a854d70bfd?w=600&q=80", tags:["Athletics","Swimming","Volleyball","Table Tennis"], teamSize:"1-15", prize:"₹1,50,000", registered:780 },
-    { id:1903, title:"IIT Palakkad Sports Meet", college:"IIT Palakkad", city:"Palakkad", category:"Sports Fest", date:"2026-05-15", deadline:"2026-05-09", description:"Annual sports meet at IIT Palakkad featuring track events, field sports, racquet sports, and e-sports.", image:"https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=600&q=80", tags:["Track","Field","E-Sports","Racquet Sports"], teamSize:"1-12", prize:"₹1,20,000", registered:620 },
-    { id:1904, title:"CET Sports Carnival", college:"College of Engineering Trivandrum", city:"Thiruvananthapuram", category:"Sports Fest", date:"2026-05-29", deadline:"2026-05-23", description:"Weekend sports carnival with friendly inter-college matches, fun runs, tug-of-war, and sports quiz.", image:"https://images.unsplash.com/photo-1568515045052-f9a854d70bfd?w=600&q=80", tags:["Fun Run","Tug of War","Football","Sports Quiz"], teamSize:"1-15", prize:"₹80,000", registered:430 },
-    { id:1905, title:"Amal Jyothi Premier League", college:"Amal Jyothi College of Engineering", city:"Kottayam", category:"Sports Fest", date:"2026-06-19", deadline:"2026-06-13", description:"Cricket and football inter-college tournament in T20 format with a prize for best player, best team, and sportsmanship.", image:"https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=600&q=80", tags:["Cricket","Football","T20","Best Player Award"], teamSize:"5-15", prize:"₹75,000", registered:360 },
-    { id:1906, title:"Highland Sports Fest Munnar", college:"College of Engineering Munnar", city:"Idukki", category:"Sports Fest", date:"2026-07-11", deadline:"2026-07-05", description:"Sports fest in Munnar's cool climate featuring adventure sports, trekking challenge, football, and kabaddi competitions.", image:"https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=600&q=80", tags:["Adventure Sports","Trekking","Football","Kabaddi"], teamSize:"1-15", prize:"₹50,000", registered:210 },
-
-    // DEPT FEST
-    { id:2001, title:"CSE Symposium 2026", college:"College of Engineering Trivandrum", city:"Thiruvananthapuram", category:"Dept Fest", date:"2026-03-14", deadline:"2026-03-08", description:"Computer Science department fest with paper presentations, coding contests, project expo, and AI/ML workshops exclusively for CS students.", image:"https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&q=80", tags:["CSE","AI/ML","Paper Presentation","Project Expo"], teamSize:"1-4", prize:"₹35,000", registered:285 },
-    { id:2002, title:"ECE Technica", college:"Model Engineering College", city:"Ernakulam", category:"Dept Fest", date:"2026-04-09", deadline:"2026-04-03", description:"Electronics & Communication department fest featuring circuit design, signal processing, embedded systems, and PCB design competitions.", image:"https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=80", tags:["ECE","PCB Design","Embedded","Signal Processing"], teamSize:"1-3", prize:"₹30,000", registered:195 },
-    { id:2003, title:"Civil Conclave 2026", college:"NIT Calicut", city:"Kozhikode", category:"Dept Fest", date:"2026-04-24", deadline:"2026-04-18", description:"Civil Engineering department event with CAD design, structural model competitions, surveying challenges, and smart city planning hackathon.", image:"https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&q=80", tags:["Civil","CAD","Structural Design","Smart City"], teamSize:"1-4", prize:"₹40,000", registered:165 },
-    { id:2004, title:"Mech Fiesta", college:"Government Engineering College Thrissur", city:"Thrissur", category:"Dept Fest", date:"2026-05-07", deadline:"2026-05-01", description:"Mechanical Engineering department fest with go-kart racing, CAD modelling, machine design quiz, and industrial visit.", image:"https://images.unsplash.com/photo-1581093458791-9d15482442f6?w=600&q=80", tags:["Mechanical","Go-Kart","CAD","Machine Design"], teamSize:"1-5", prize:"₹45,000", registered:220 },
-    { id:2005, title:"EEE Electronica", college:"IIT Palakkad", city:"Palakkad", category:"Dept Fest", date:"2026-05-21", deadline:"2026-05-15", description:"Electrical Engineering department symposium with power systems design challenge, energy audit competition, and smart grid hackathon.", image:"https://images.unsplash.com/photo-1509391366360-2e959784a276?w=600&q=80", tags:["EEE","Power Systems","Smart Grid","Energy Audit"], teamSize:"1-3", prize:"₹38,000", registered:145 },
-    { id:2006, title:"CS&IT Synergia", college:"Amal Jyothi College of Engineering", city:"Kottayam", category:"Dept Fest", date:"2026-06-05", deadline:"2026-05-30", description:"IT and CS department fest featuring web dev sprint, database design challenge, cybersecurity capture-the-flag, and open-source sprint.", image:"https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=600&q=80", tags:["Web Dev","CTF","Database","Open Source"], teamSize:"1-3", prize:"₹32,000", registered:175 },
-    { id:2007, title:"MunnarBuild Dept Fest", college:"College of Engineering Munnar", city:"Idukki", category:"Dept Fest", date:"2026-06-26", deadline:"2026-06-20", description:"Multi-department fest at CE Munnar covering CS, EC, and Civil branches with paper presentations, project showcases, and mini-hackathons.", image:"https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&q=80", tags:["Multi-Dept","Paper Presentation","Mini Hackathon","Project Showcase"], teamSize:"1-4", prize:"₹28,000", registered:105 }
-  ];
+  // ── Show a loading indicator while Firebase events load ──
+  (function showLoadingBanner() {
+    const grid = document.getElementById('events-grid');
+    if (grid) grid.innerHTML = `
+      <div class="empty" style="grid-column:1/-1">
+        <div class="emoji">⚡</div>
+        <p style="color:#7c8db5">Loading events...</p>
+      </div>`;
+  })();
 
   // --- TAB SWITCHING ---
   function switchTab(tab) {
@@ -739,7 +980,12 @@
 
     const grid = document.getElementById('events-grid');
     if (filtered.length === 0) {
-      grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="emoji">🔭</div><p>No events match your search.</p></div>`;
+      const isFiltered = search || cat !== 'All' || city !== 'All Cities';
+      grid.innerHTML = `<div class="empty" style="grid-column:1/-1">
+        <div class="emoji">${isFiltered ? '🔭' : '📭'}</div>
+        <p style="color:#7c8db5">${isFiltered ? 'No events match your search.' : 'No events posted yet. Be the first to post!'}</p>
+        ${!isFiltered ? '<button onclick="openPostForm()" style="margin-top:16px;background:#00d4aa;color:#000;border:none;border-radius:10px;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer;font-family:Syne,sans-serif">+ Post an Event</button>' : ''}
+      </div>`;
       return;
     }
 
@@ -752,7 +998,7 @@
       const dateStr = new Date(e.date).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
 
       return `
-        <div class="event-card" onclick="openModal(${e.id})" style="--hover-color:${color}; background: ${CAT_BG[e.category] || '#0f1117'};"
+        <div class="event-card" data-event-id="${e.id}" onclick="openModal(this.getAttribute('data-event-id'))" style="--hover-color:${color}; background: ${CAT_BG[e.category] || '#0f1117'};"
           onmouseenter="this.style.borderColor='${color}'" onmouseleave="this.style.borderColor='#1e2130'">
           <div class="card-img">
             <img src="${e.image}" alt="${e.title}" loading="lazy" />
@@ -765,8 +1011,8 @@
             <div class="card-meta">📍 ${e.city} · 📅 ${dateStr}</div>
             <div class="card-tags">${tags}</div>
             <div class="card-footer">
-              <button onclick="event.stopPropagation(); openModal(${e.id})" style="background:${color};color:#000;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:0.3px;">Apply Now →</button>
-              <span class="card-reg">${e.registered} registered</span>
+              <button class="apply-btn" data-event-id="${e.id}" data-reg-link="${(e.registrationLink||'').replace(/"/g,'&quot;')}" onclick="event.stopPropagation(); handleApplyBtn(this)" style="background:${color};color:#000;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:0.3px;">Apply Now →</button>
+              <span style="color:#7c8db5;font-size:12px;">View Details →</span>
             </div>
           </div>
         </div>`;
@@ -774,38 +1020,84 @@
   }
 
   // --- MODAL ---
+  // Reads event id and registration link safely from data attributes
+  function handleApplyBtn(btn) {
+    const id  = btn.getAttribute('data-event-id');
+    const link = btn.getAttribute('data-reg-link');
+    if (link) {
+      window.open(link, '_blank', 'noopener,noreferrer');
+    } else {
+      openModal(id);
+    }
+  }
+
   function openModal(id) {
-    const e = events.find(ev => ev.id === id);
+    const e = events.find(ev => String(ev.id) === String(id));
     if (!e) return;
     const color = CAT_COLORS[e.category] || '#00d4aa';
 
-    document.getElementById('m-img').src = e.image;
+    // Hero image
+    document.getElementById('m-img').src = e.image || '';
     document.getElementById('m-img').alt = e.title;
-    document.getElementById('m-cat').textContent = e.category;
-    document.getElementById('m-cat').style.background = color;
+
+    // Category badge in hero
+    const catEl = document.getElementById('m-cat');
+    catEl.textContent = e.category;
+    catEl.style.background = color;
+
+    // Deadline urgency badge in hero
+    const daysLeft = Math.ceil((new Date(e.deadline) - new Date()) / (1000*60*60*24));
+    const deadlineBadge = document.getElementById('m-deadline-badge');
+    if (daysLeft > 0 && daysLeft <= 10) {
+      deadlineBadge.textContent = '🔥 ' + daysLeft + 'd left';
+      deadlineBadge.style.display = 'inline-block';
+    } else {
+      deadlineBadge.style.display = 'none';
+    }
+
+    // Title, college, city
     document.getElementById('m-title').textContent = e.title;
-    document.getElementById('m-college').textContent = '🏛 ' + e.college;
+    document.getElementById('m-college').textContent = e.college;
     document.getElementById('m-city').textContent = '📍 ' + e.city;
-    document.getElementById('m-desc').textContent = e.description;
-    document.getElementById('m-date').textContent = new Date(e.date).toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-    document.getElementById('m-deadline').textContent = new Date(e.deadline).toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric' });
-    document.getElementById('m-team').textContent = e.teamSize + ' members';
-    document.getElementById('m-prize').textContent = e.prize;
-    document.getElementById('m-tags').innerHTML = e.tags.map(t =>
-      `<span class="modal-tag" style="background:#1a1f2e;color:${color};border:1px solid ${color}44">${t}</span>`
+
+    // Stats
+    document.getElementById('m-date').textContent =
+      new Date(e.date).toLocaleDateString('en-IN', { weekday:'short', day:'numeric', month:'long', year:'numeric' });
+    document.getElementById('m-deadline').textContent =
+      new Date(e.deadline).toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric' });
+    document.getElementById('m-team').textContent = e.teamSize || '—';
+    document.getElementById('m-prize').textContent = e.prize || '—';
+
+    // Description
+    document.getElementById('m-desc').textContent = e.description || 'No description provided.';
+
+    // Tags
+    document.getElementById('m-tags').innerHTML = (e.tags || []).map(t =>
+      `<span class="modal-tag" style="background:#111520;color:${color};border:1px solid ${color}33;font-size:12px;padding:5px 12px;border-radius:8px;">${t}</span>`
     ).join('');
-    document.getElementById('m-reg-btn').style.background = color;
-    document.getElementById('m-reg-btn').style.color = '#000';
-    document.getElementById('m-reg-btn').style.boxShadow = '0 4px 20px ' + color + '55';
-    document.getElementById('m-reg-btn').onclick = function() { openRegForm(e.id); };
+
+    // Stat box accent
+    document.querySelectorAll('.stat-box').forEach(b => b.style.borderColor = color + '22');
+
+    // Register / Apply button
+    const regBtn = document.getElementById('m-reg-btn');
+    regBtn.style.background = color;
+    regBtn.style.color = '#000';
+    regBtn.style.boxShadow = '0 8px 30px ' + color + '44';
+    if (e.registrationLink) {
+      regBtn.textContent = '🔗 Apply Now →';
+      regBtn.onclick = () => window.open(e.registrationLink, '_blank', 'noopener,noreferrer');
+    } else {
+      regBtn.textContent = '✍️ Register Now →';
+      regBtn.onclick = () => { closeModal(); openRegForm(e.id); };
+    }
+
+    // Admin registrations button
     document.getElementById('m-view-regs-btn').onclick = function() {
-      if (!isAdminLoggedIn) {
-        openAdminLogin();
-      } else {
-        closeModal();
-        openRegsModal(e.id);
-      }
+      if (!isAdminLoggedIn) { openAdminLogin(); }
+      else { closeModal(); openRegsModal(e.id); }
     };
+
     document.getElementById('event-modal').classList.add('open');
     document.body.style.overflow = 'hidden';
   }
@@ -826,36 +1118,186 @@
     document.body.style.overflow = '';
   }
 
-  function submitEvent() {
+  // ── Cloudinary config (stored in localStorage so it persists) ──
+  // These are loaded from the admin-configurable settings panel
+  function getCloudinaryName()   { return localStorage.getItem('cld_cloud_name')   || ''; }
+  function getCloudinaryPreset() { return localStorage.getItem('cld_upload_preset') || ''; }
+
+  let uploadedImageUrl = ""; // stores the final Cloudinary URL
+
+  function handleImageSelect(event) {
+    const file = event.target.files[0];
+    if (file) previewAndStageImage(file);
+  }
+
+  function handleImageDrop(event) {
+    event.preventDefault();
+    document.getElementById('f-img-upload-area').classList.remove('dragover');
+    const file = event.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) previewAndStageImage(file);
+  }
+
+  function previewAndStageImage(file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('f-img-preview').src = e.target.result;
+      document.getElementById('f-img-preview-wrap').style.display = 'block';
+      document.getElementById('f-img-upload-area').style.display = 'none';
+      document.getElementById('f-img-status').textContent = '📎 ' + file.name + ' — will upload on submit';
+    };
+    reader.readAsDataURL(file);
+    // Store file reference for upload on submit
+    window.__pendingImageFile = file;
+    uploadedImageUrl = ""; // reset until actually uploaded
+  }
+
+  function removeImage() {
+    document.getElementById('f-img-preview-wrap').style.display = 'none';
+    document.getElementById('f-img-upload-area').style.display = 'block';
+    document.getElementById('f-img-file').value = '';
+    document.getElementById('f-img-status').textContent = '';
+    document.getElementById('f-img-progress').style.display = 'none';
+    document.getElementById('f-img-progress-bar').style.width = '0%';
+    window.__pendingImageFile = null;
+    uploadedImageUrl = "";
+  }
+
+  async function uploadImageToCloudinary(file) {
+    const cloudName   = getCloudinaryName();
+    const uploadPreset = getCloudinaryPreset();
+
+    if (!cloudName || !uploadPreset) {
+      document.getElementById('f-img-status').textContent = '⚠️ Cloudinary not set up — open Settings to add credentials';
+      throw new Error('Cloudinary credentials not configured');
+    }
+
+    document.getElementById('f-img-progress').style.display = 'block';
+    document.getElementById('f-img-status').textContent = '⬆️ Uploading image...';
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', uploadPreset);
+    formData.append('folder', 'kerala_college_events');
+
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`);
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const pct = Math.round((e.loaded / e.total) * 100);
+          document.getElementById('f-img-progress-bar').style.width = pct + '%';
+          document.getElementById('f-img-status').textContent = `⬆️ Uploading... ${pct}%`;
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          const res = JSON.parse(xhr.responseText);
+          document.getElementById('f-img-status').textContent = '✅ Image uploaded!';
+          document.getElementById('f-img-progress-bar').style.width = '100%';
+          resolve(res.secure_url);
+        } else {
+          reject(new Error('Cloudinary upload failed: ' + xhr.status));
+        }
+      };
+
+      xhr.onerror = () => reject(new Error('Network error during upload'));
+      xhr.send(formData);
+    });
+  }
+
+  async function submitEvent() {
     const title = document.getElementById('f-title').value.trim();
     const college = document.getElementById('f-college').value.trim();
     if (!title || !college) { alert('Please fill in at least Event Title and College Name.'); return; }
 
+    const btn = document.querySelector('#post-form-overlay .post-btn');
+
+    // Helper: always re-enable button and close form regardless of outcome
+    function finishSubmit(newEvent) {
+      sendToGoogleSheets("event", {
+        title:       newEvent.title,
+        college:     newEvent.college,
+        city:        newEvent.city,
+        category:    newEvent.category,
+        date:        newEvent.date,
+        deadline:    newEvent.deadline,
+        prize:       newEvent.prize,
+        teamSize:    newEvent.teamSize,
+        tags:        Array.isArray(newEvent.tags) ? newEvent.tags.join(", ") : newEvent.tags,
+        description: newEvent.description
+      });
+      if (btn) { btn.textContent = 'Post Event Now →'; btn.disabled = false; }
+      closePostForm();
+      switchTab('browse');
+      ['f-title','f-college','f-date','f-deadline','f-prize','f-team','f-tags','f-desc','f-reglink'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      // Reset image upload
+      removeImage();
+    }
+
+    if (btn) { btn.textContent = 'Uploading...'; btn.disabled = true; }
+
+    // Upload image to Cloudinary first (if one was selected)
+    let imageUrl = 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=600&q=80';
+    if (window.__pendingImageFile) {
+      try {
+        imageUrl = await uploadImageToCloudinary(window.__pendingImageFile);
+      } catch(err) {
+        console.error('Image upload failed:', err.message);
+        document.getElementById('f-img-status').textContent = '❌ ' + err.message;
+        // Don't proceed with default — stop and let user fix credentials
+        if (err.message.includes('not configured')) {
+          if (btn) { btn.textContent = 'Publish Event →'; btn.disabled = false; }
+          openCloudinarySettings();
+          return;
+        }
+        document.getElementById('f-img-status').textContent = '⚠️ Upload failed — posting with default image';
+      }
+    }
+
+    if (btn) btn.textContent = 'Posting...';
+
     const newEvent = {
-      id: Date.now(),
       title,
       college,
-      city: document.getElementById('f-city').value,
-      category: document.getElementById('f-category').value,
-      date: document.getElementById('f-date').value || new Date().toISOString().split('T')[0],
-      deadline: document.getElementById('f-deadline').value || new Date().toISOString().split('T')[0],
+      city:        document.getElementById('f-city').value,
+      category:    document.getElementById('f-category').value,
+      date:        document.getElementById('f-date').value || new Date().toISOString().split('T')[0],
+      deadline:    document.getElementById('f-deadline').value || new Date().toISOString().split('T')[0],
       description: document.getElementById('f-desc').value || 'No description provided.',
-      prize: document.getElementById('f-prize').value || 'TBD',
-      teamSize: document.getElementById('f-team').value || '1-5',
-      tags: document.getElementById('f-tags').value.split(',').map(t => t.trim()).filter(Boolean),
-      image: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=600&q=80',
-      registered: 0
+      prize:       document.getElementById('f-prize').value || 'TBD',
+      teamSize:    document.getElementById('f-team').value || '1-5',
+      tags:        document.getElementById('f-tags').value.split(',').map(t => t.trim()).filter(Boolean),
+      image:            imageUrl,
+      registrationLink: document.getElementById('f-reglink').value.trim(),
+      registered:       0,
+      hidden:           false
     };
 
-    events.unshift(newEvent);
-    closePostForm();
-    switchTab('browse');
-    renderEvents();
+    // Race Firebase against a 6-second timeout so it never hangs
+    const firebasePromise = (window.firebaseAddEvent)
+      ? window.firebaseAddEvent(newEvent)
+      : Promise.reject(new Error('Firebase not ready'));
 
-    // clear form
-    ['f-title','f-college','f-date','f-deadline','f-prize','f-team','f-tags','f-desc'].forEach(id => {
-      document.getElementById(id).value = '';
-    });
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Firebase timeout')), 6000)
+    );
+
+    try {
+      await Promise.race([firebasePromise, timeoutPromise]);
+      // onSnapshot will auto-merge the new event into the browse list
+    } catch(err) {
+      console.warn('Firebase save failed or timed out — saving locally:', err.message);
+      // Fallback: add locally so user sees it immediately
+      newEvent.id = Date.now();
+      events.unshift(newEvent);
+      renderEvents();
+    }
+
+    finishSubmit(newEvent);
   }
 
   // --- REGISTRATION FORM ---
@@ -863,7 +1305,7 @@
 
   function openRegForm(eventId) {
     currentRegEventId = eventId;
-    const e = events.find(ev => ev.id === eventId);
+    const e = events.find(ev => String(ev.id) === String(eventId));
     if (!e) return;
     const color = CAT_COLORS[e.category] || '#00d4aa';
 
@@ -885,45 +1327,14 @@
     document.body.style.overflow = '';
   }
 
-  function submitRegistration() {
-    const name = document.getElementById('r-name').value.trim();
-    const email = document.getElementById('r-email').value.trim();
-    const phone = document.getElementById('r-phone').value.trim();
-    const college = document.getElementById('r-college').value.trim();
-    const year = document.getElementById('r-year').value;
-
-    if (!name || !email || !phone || !college || !year) {
-      alert('Please fill in all required fields.');
-      return;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      alert('Please enter a valid email address.');
-      return;
-    }
-    if (!/^[0-9]{10}$/.test(phone)) {
-      alert('Please enter a valid 10-digit phone number.');
-      return;
-    }
-
-    // Update registered count
-    const e = events.find(ev => ev.id === currentRegEventId);
-    if (e) e.registered++;
-    renderEvents();
-
-    // Show success
-    document.getElementById('reg-form-content').style.display = 'none';
-    document.getElementById('success-title').textContent = 'You\'re Registered, ' + name.split(' ')[0] + '! 🎉';
-    document.getElementById('success-msg').textContent =
-      'A confirmation has been sent to ' + email + '. See you at ' + (e ? e.title : 'the event') + '!';
-    document.getElementById('reg-success').style.display = 'block';
-  }
+  // submitRegistration defined below (single async version)
 
   // keyboard close
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') { closeModal(); closePostForm(); closeRegForm(); closeEditModal(); closeRegsModal(); }
   });
 
-  // INIT
+  // INIT — render seed events immediately; Firebase events will merge in via onSnapshot
   renderEvents();
 
   // ===================== ADMIN =====================
@@ -953,31 +1364,64 @@
   }
   seedMockRegistrations();
 
-  // Intercept real registration submissions to store them
-  const _origSubmit = submitRegistration;
-  submitRegistration = function() {
-    const name = document.getElementById('r-name').value.trim();
-    const email = document.getElementById('r-email').value.trim();
-    const phone = document.getElementById('r-phone').value.trim();
+  // ── Single async submitRegistration ─────────────────────────────
+  async function submitRegistration() {
+    const name    = document.getElementById('r-name').value.trim();
+    const email   = document.getElementById('r-email').value.trim();
+    const phone   = document.getElementById('r-phone').value.trim();
     const college = document.getElementById('r-college').value.trim();
-    const year = document.getElementById('r-year').value;
-    const dept = document.getElementById('r-dept').value.trim();
-    const team = document.getElementById('r-team').value.trim();
+    const year    = document.getElementById('r-year').value;
+    const dept    = document.getElementById('r-dept').value.trim();
+    const team    = document.getElementById('r-team').value.trim();
+
     if (!name || !email || !phone || !college || !year) { alert('Please fill in all required fields.'); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alert('Please enter a valid email address.'); return; }
     if (!/^[0-9]{10}$/.test(phone)) { alert('Please enter a valid 10-digit phone number.'); return; }
-    const e = events.find(ev => ev.id === currentRegEventId);
+
+    const e = events.find(ev => String(ev.id) === String(currentRegEventId));
+    const regData = { name, email, phone, college, dept, year, team };
+
+    // Save to Firebase (with 6s timeout so it never hangs)
+    try {
+      if (window.firebaseAddRegistration) {
+        const fbPromise = window.firebaseAddRegistration(currentRegEventId, regData);
+        const timeout   = new Promise((_, r) => setTimeout(() => r(new Error('timeout')), 6000));
+        await Promise.race([fbPromise, timeout]);
+      }
+    } catch(err) {
+      console.warn('Firebase registration save failed (local only):', err.message);
+    }
+
+    // Local cache update
     if (e) {
       e.registered++;
       if (!registrationsDB[e.id]) registrationsDB[e.id] = [];
-      registrationsDB[e.id].push({ name, email, phone, college, dept, year, team });
+      registrationsDB[e.id].push(regData);
     }
     renderEvents();
+
+    // ── Send to Google Sheets (Registrations sheet) ───────
+    sendToGoogleSheets("registration", {
+      studentName:  name,
+      email:        email,
+      phone:        phone,
+      college:      college,
+      department:   dept,
+      year:         year,
+      teamName:     team,
+      eventId:      String(currentRegEventId),
+      eventTitle:   e ? e.title : "",
+      eventCollege: e ? e.college : "",
+      eventCity:    e ? e.city : "",
+      category:     e ? e.category : ""
+    });
+    // ─────────────────────────────────────────────────────
+
     document.getElementById('reg-form-content').style.display = 'none';
-    document.getElementById('success-title').textContent = "You\'re Registered, " + name.split(' ')[0] + '! 🎉';
+    document.getElementById('success-title').textContent = "You're Registered, " + name.split(' ')[0] + '! 🎉';
     document.getElementById('success-msg').textContent = 'A confirmation has been sent to ' + email + '. See you at ' + (e ? e.title : 'the event') + '!';
     document.getElementById('reg-success').style.display = 'block';
-  };
+  }
 
   function openAdminLogin() {
     if (isAdminLoggedIn) { showAdminDashboard(); return; }
@@ -1076,23 +1520,33 @@
     }).join('');
   }
 
-  function toggleEventVisibility(id) {
+  async function toggleEventVisibility(id) {
     const e = events.find(ev => ev.id === id);
     if (!e) return;
     e.hidden = !e.hidden;
+    // Sync to Firebase if it's a Firebase-backed event
+    if (e._firebaseDoc && window.firebaseUpdateEvent) {
+      try { await window.firebaseUpdateEvent(id, { hidden: e.hidden }); } catch(err) { console.warn(err); }
+    }
     renderEvents();
     renderAdminTable(document.querySelector('.admin-search')?.value || '');
     showAdminDashboard();
   }
 
-  function adminDeleteEvent(id) {
+  async function adminDeleteEvent(id) {
     const e = events.find(ev => ev.id === id);
     if (!e) return;
     if (!confirm('Delete "' + e.title + '"? This cannot be undone.')) return;
-    events = events.filter(ev => ev.id !== id);
+    // Delete from Firebase if it's a Firebase-backed event
+    if (e._firebaseDoc && window.firebaseDeleteEvent) {
+      try { await window.firebaseDeleteEvent(id); } catch(err) { console.warn(err); }
+      // onSnapshot will update events automatically
+    } else {
+      events = events.filter(ev => ev.id !== id);
+      showAdminDashboard();
+      renderEvents();
+    }
     delete registrationsDB[id];
-    showAdminDashboard();
-    renderEvents();
   }
 
   // ── EDIT EVENT ──
@@ -1122,7 +1576,7 @@
     editingEventId = null;
   }
 
-  function saveEditedEvent() {
+  async function saveEditedEvent() {
     const e = events.find(ev => ev.id === editingEventId);
     if (!e) return;
     e.title       = document.getElementById('e-title').value.trim() || e.title;
@@ -1135,17 +1589,41 @@
     e.teamSize    = document.getElementById('e-teamSize').value.trim() || e.teamSize;
     e.tags        = document.getElementById('e-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
     e.description = document.getElementById('e-description').value.trim() || e.description;
+
+    // Sync to Firebase if it's a Firebase-backed event
+    if (e._firebaseDoc && window.firebaseUpdateEvent) {
+      const { _firebaseDoc, id, ...updateData } = e;
+      try { await window.firebaseUpdateEvent(id, updateData); } catch(err) { console.warn(err); }
+    }
+
     closeEditModal();
     renderEvents();
     showAdminDashboard();
   }
 
   // ── VIEW REGISTRATIONS ──
-  function openRegsModal(id) {
+  async function openRegsModal(id) {
     const e = events.find(ev => ev.id === id);
     if (!e) return;
-    const regs = registrationsDB[id] || [];
     document.getElementById('regs-title').textContent = '👥 ' + e.title;
+    document.getElementById('regs-subtitle').textContent = e.college + ' · Loading registrations...';
+    document.getElementById('regs-list').innerHTML = '<div class="no-regs">⏳ Fetching registrations...</div>';
+    document.getElementById('regs-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    // Fetch from Firebase if available
+    let regs = registrationsDB[id] || [];
+    try {
+      if (window.firebaseGetRegistrations) {
+        const fbRegs = await window.firebaseGetRegistrations(id);
+        if (fbRegs.length > 0) regs = fbRegs;
+        // cache locally
+        registrationsDB[id] = regs;
+      }
+    } catch(err) {
+      console.warn('Could not fetch registrations from Firebase:', err.message);
+    }
+
     document.getElementById('regs-subtitle').textContent = e.college + ' · ' + regs.length + ' registration' + (regs.length!==1?'s':'');
     if (regs.length === 0) {
       document.getElementById('regs-list').innerHTML = '<div class="no-regs">🎫 No registrations yet for this event.</div>';
@@ -1159,8 +1637,6 @@
           </div>
         </div>`).join('');
     }
-    document.getElementById('regs-overlay').classList.add('open');
-    document.body.style.overflow = 'hidden';
   }
 
   function closeRegsModal() {
@@ -1190,6 +1666,103 @@
     closeAdminDashboard();
     switchTab('browse');
   }
+
+  // ── Cloudinary Settings Panel ─────────────────────────
+  function openCloudinarySettings() {
+    const overlay = document.getElementById('cld-settings-overlay');
+    overlay.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    // Pre-fill saved values
+    document.getElementById('cld-input-name').value   = localStorage.getItem('cld_cloud_name')   || '';
+    document.getElementById('cld-input-preset').value = localStorage.getItem('cld_upload_preset') || '';
+    document.getElementById('cld-save-msg').style.display = 'none';
+  }
+
+  function closeCloudinarySettings() {
+    document.getElementById('cld-settings-overlay').style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  async function saveCloudinarySettings() {
+    const name   = document.getElementById('cld-input-name').value.trim();
+    const preset = document.getElementById('cld-input-preset').value.trim();
+    const msgEl  = document.getElementById('cld-save-msg');
+
+    if (!name || !preset) {
+      msgEl.style.display = 'block';
+      msgEl.style.background = 'rgba(239,68,68,0.1)';
+      msgEl.style.borderColor = 'rgba(239,68,68,0.3)';
+      msgEl.style.color = '#f87171';
+      msgEl.textContent = '⚠️ Please fill in both Cloud Name and Upload Preset.';
+      return;
+    }
+
+    // Test the connection with a tiny ping to Cloudinary
+    msgEl.style.display = 'block';
+    msgEl.style.background = 'rgba(0,212,170,0.05)';
+    msgEl.style.borderColor = 'rgba(0,212,170,0.2)';
+    msgEl.style.color = '#7c8db5';
+    msgEl.textContent = '🔄 Testing connection...';
+
+    try {
+      // Ping the Cloudinary API endpoint - if cloud name is valid it returns JSON
+      const res = await fetch(`https://res.cloudinary.com/${name}/image/upload`, { method: 'OPTIONS', mode: 'no-cors' });
+      // no-cors won't throw for valid endpoints
+      localStorage.setItem('cld_cloud_name',   name);
+      localStorage.setItem('cld_upload_preset', preset);
+
+      msgEl.style.background = 'rgba(0,212,170,0.1)';
+      msgEl.style.borderColor = 'rgba(0,212,170,0.3)';
+      msgEl.style.color = '#00d4aa';
+      msgEl.textContent = '✅ Saved! Cloudinary is ready — you can now upload images.';
+
+      // Update the settings button to show connected state
+      const btn = document.getElementById('cld-settings-btn');
+      if (btn) { btn.textContent = '✅ Cloudinary Connected'; btn.style.color = '#00d4aa'; btn.style.borderColor = '#00d4aa44'; }
+
+      // Update status bar in form
+      const bar = document.getElementById('cld-status-bar');
+      if (bar) {
+        bar.style.display = 'block';
+        bar.style.background = 'rgba(0,212,170,0.08)';
+        bar.style.border = '1px solid rgba(0,212,170,0.2)';
+        bar.style.color = '#00d4aa';
+        bar.textContent = '✅ Cloudinary connected — images will upload to ' + name;
+      }
+
+      setTimeout(() => closeCloudinarySettings(), 1500);
+    } catch(err) {
+      localStorage.setItem('cld_cloud_name',   name);
+      localStorage.setItem('cld_upload_preset', preset);
+      msgEl.style.background = 'rgba(0,212,170,0.1)';
+      msgEl.style.borderColor = 'rgba(0,212,170,0.3)';
+      msgEl.style.color = '#00d4aa';
+      msgEl.textContent = '✅ Saved! Settings stored successfully.';
+      setTimeout(() => closeCloudinarySettings(), 1500);
+    }
+  }
+
+  // On load — check if Cloudinary is already configured and update the button
+  (function initCloudinaryStatus() {
+    const name   = localStorage.getItem('cld_cloud_name');
+    const preset = localStorage.getItem('cld_upload_preset');
+    if (name && preset) {
+      // Defer until DOM ready
+      setTimeout(() => {
+        const btn = document.getElementById('cld-settings-btn');
+        if (btn) { btn.textContent = '✅ Cloudinary Connected'; btn.style.color = '#00d4aa'; btn.style.borderColor = '#00d4aa44'; }
+        const bar = document.getElementById('cld-status-bar');
+        if (bar) {
+          bar.style.display = 'block';
+          bar.style.background = 'rgba(0,212,170,0.08)';
+          bar.style.border = '1px solid rgba(0,212,170,0.2)';
+          bar.style.color = '#00d4aa';
+          bar.textContent = '✅ Cloudinary connected — images will upload to ' + name;
+        }
+      }, 500);
+    }
+  })();
+
 </script>
 
 <!-- ADMIN LOGIN MODAL -->
@@ -1315,6 +1888,54 @@
     </div>
     <p class="regs-subtitle" id="regs-subtitle"></p>
     <div id="regs-list"></div>
+  </div>
+</div>
+
+
+<!-- CLOUDINARY SETTINGS MODAL -->
+<div id="cld-settings-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:700;align-items:center;justify-content:center;padding:20px;"
+     onclick="if(event.target===this)closeCloudinarySettings()">
+  <div style="background:#0f1117;border:1px solid #1e2130;border-radius:20px;max-width:480px;width:100%;padding:32px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+      <div>
+        <h2 style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;">☁️ Cloudinary Setup</h2>
+        <p style="color:#7c8db5;font-size:13px;margin-top:4px;">Required for image uploads. Free at cloudinary.com</p>
+      </div>
+      <button onclick="closeCloudinarySettings()" style="background:#1a1f2e;border:none;color:#7c8db5;font-size:22px;cursor:pointer;border-radius:8px;width:36px;height:36px;">×</button>
+    </div>
+
+    <div style="display:grid;gap:16px;">
+      <div>
+        <label style="color:#7c8db5;font-size:11px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Cloud Name</label>
+        <input id="cld-input-name" type="text" placeholder="e.g. dxyz1234abc"
+          style="background:#1a1f2e;border:1px solid #2a3050;border-radius:10px;padding:12px 14px;color:#fff;font-size:14px;outline:none;width:100%;font-family:'DM Sans',sans-serif;" />
+        <p style="color:#4a5568;font-size:11px;margin-top:4px;">Find this on your Cloudinary dashboard homepage</p>
+      </div>
+      <div>
+        <label style="color:#7c8db5;font-size:11px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Upload Preset</label>
+        <input id="cld-input-preset" type="text" placeholder="e.g. kerala_events"
+          style="background:#1a1f2e;border:1px solid #2a3050;border-radius:10px;padding:12px 14px;color:#fff;font-size:14px;outline:none;width:100%;font-family:'DM Sans',sans-serif;" />
+        <p style="color:#4a5568;font-size:11px;margin-top:4px;">Settings → Upload → Upload Presets → must be <strong style="color:#7c8db5">Unsigned</strong></p>
+      </div>
+
+      <div id="cld-save-msg" style="display:none;background:rgba(0,212,170,0.1);border:1px solid rgba(0,212,170,0.3);border-radius:8px;padding:10px 14px;color:#00d4aa;font-size:13px;"></div>
+
+      <button onclick="saveCloudinarySettings()"
+        style="background:#00d4aa;color:#000;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:'Syne',sans-serif;width:100%;">
+        Save &amp; Test Connection →
+      </button>
+
+      <div style="border-top:1px solid #1e2130;padding-top:16px;">
+        <p style="color:#4a5568;font-size:12px;line-height:1.6;">
+          <strong style="color:#7c8db5;">How to get these:</strong><br>
+          1. Sign up free at <a href="https://cloudinary.com" target="_blank" style="color:#00d4aa;">cloudinary.com</a><br>
+          2. Your <strong style="color:#7c8db5;">Cloud Name</strong> is shown on your dashboard<br>
+          3. Go to <strong style="color:#7c8db5;">Settings → Upload → Add upload preset</strong><br>
+          4. Set Signing Mode to <strong style="color:#00d4aa;">Unsigned</strong> → Save<br>
+          5. Paste the preset name above
+        </p>
+      </div>
+    </div>
   </div>
 </div>
 
